@@ -1,0 +1,16 @@
+# Mockery configuration for generating mocks
+# See: https://vektra.github.io/mockery/latest/configuration/
+
+with-expecter: true
+dir: "mocks"
+outpkg: mocks
+filename: "mock_{{.InterfaceName}}.go"
+
+packages:
+  dbfartifactapi/repository:
+    interfaces:
+      BaseRepository:
+      DBMgtRepository:
+      CntMgtRepository:
+      EndpointRepository:
+      DBTypeRepository:

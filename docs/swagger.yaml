@@ -1,0 +1,2802 @@
+basePath: /api
+definitions:
+  controllers.ActorAssignmentErrorResponse:
+    properties:
+      error:
+        example: failed to assign actors to group
+        type: string
+    type: object
+  controllers.ActorAssignmentRequest:
+    properties:
+      actor_ids:
+        example:
+        - 521
+        - 522
+        - 523
+        items:
+          type: integer
+        type: array
+    type: object
+  controllers.ActorAssignmentResult:
+    properties:
+      actors_assigned:
+        example:
+        - 10
+        - 20
+        - 30
+        items:
+          type: integer
+        type: array
+      already_assigned:
+        example:
+        - 5
+        items:
+          type: integer
+        type: array
+      partial_success:
+        example: false
+        type: boolean
+      success:
+        example: true
+        type: boolean
+      total_executions:
+        example: 1
+        type: integer
+      velo_jobs_failed:
+        items:
+          $ref: '#/definitions/controllers.VeloExecutionError'
+        type: array
+      velo_jobs_succeeded:
+        example:
+        - batch_conn_1_group_5_allow_15_commands_1729800000
+        items:
+          type: string
+        type: array
+    type: object
+  controllers.ActorCreationErrorResponse:
+    properties:
+      error:
+        example: failed to create actor
+        type: string
+    type: object
+  controllers.ActorNotFoundResponse:
+    properties:
+      error:
+        example: record not found
+        type: string
+    type: object
+  controllers.ActorRemovalResult:
+    properties:
+      actors_removed:
+        example:
+        - 10
+        - 20
+        items:
+          type: integer
+        type: array
+      not_assigned:
+        example:
+        - 99
+        items:
+          type: integer
+        type: array
+      partial_success:
+        example: false
+        type: boolean
+      success:
+        example: true
+        type: boolean
+      total_executions:
+        example: 1
+        type: integer
+      velo_jobs_failed:
+        items:
+          $ref: '#/definitions/controllers.VeloExecutionError'
+        type: array
+      velo_jobs_succeeded:
+        example:
+        - batch_conn_1_group_5_deny_10_commands_1729800001
+        items:
+          type: string
+        type: array
+    type: object
+  controllers.ActorResponse:
+    properties:
+      cntid:
+        example: 1
+        type: integer
+      db_client:
+        example: mysql_client
+        type: string
+      dbuser:
+        example: testuser
+        type: string
+      description:
+        example: Test database user
+        type: string
+      id:
+        example: 521
+        type: integer
+      ip_address:
+        example: 192.168.1.100
+        type: string
+      osuser:
+        example: root
+        type: string
+      password:
+        example: password123
+        type: string
+      status:
+        example: active
+        type: string
+    type: object
+  controllers.BackupErrorResponse:
+    properties:
+      error:
+        example: failed to execute backup
+        type: string
+      message:
+        example: connection management with id=123 not found
+        type: string
+    type: object
+  controllers.BackupJobStartResponse:
+    properties:
+      job_id:
+        example: backup_123
+        type: string
+      message:
+        example: Backup job started successfully with 3 steps
+        type: string
+      status:
+        example: success
+        type: string
+    type: object
+  controllers.BackupValidationErrorResponse:
+    properties:
+      error:
+        example: validation failed
+        type: string
+      message:
+        example: 'invalid job ID: must be greater than 0'
+        type: string
+    type: object
+  controllers.BulkCreateResponse:
+    properties:
+      message:
+        example: Inserted 5 new records
+        type: string
+    type: object
+  controllers.BulkDeleteDBPolicyRequest:
+    properties:
+      policy_ids:
+        items:
+          type: integer
+        minItems: 1
+        type: array
+    required:
+    - policy_ids
+    type: object
+  controllers.BulkDeleteDBPolicyResponse:
+    properties:
+      deleted_count:
+        type: integer
+      errors:
+        items:
+          type: string
+        type: array
+      failed_ids:
+        items:
+          type: integer
+        type: array
+      message:
+        type: string
+      success:
+        type: boolean
+    type: object
+  controllers.BulkPolicyUpdateJobResponse:
+    properties:
+      message:
+        example: 'Bulk policy update background job started: F.C4LG5UMHSAPEI0J. Adding
+          6 policies, removing 3 policies.'
+        type: string
+      status:
+        example: job_started
+        type: string
+    type: object
+  controllers.BulkPolicyUpdateRequest:
+    properties:
+      cntmgt_id:
+        example: 1
+        type: integer
+      dbactormgt_id:
+        example: 3
+        type: integer
+      dbmgt_id:
+        example: 5
+        type: integer
+      new_object_mgts:
+        example:
+        - 100
+        - 101
+        - 102
+        items:
+          type: integer
+        type: array
+      new_policy_defaults:
+        example:
+        - 10
+        - 11
+        - 12
+        items:
+          type: integer
+        type: array
+    required:
+    - cntmgt_id
+    - dbactormgt_id
+    - dbmgt_id
+    - new_object_mgts
+    - new_policy_defaults
+    type: object
+  controllers.ConnectionMgtRequest:
+    properties:
+      cntmgt:
+        example: 1
+        type: integer
+    type: object
+  controllers.DBActorMgtCreateRequest:
+    properties:
+      cntmgt:
+        example: 1
+        type: integer
+      db_client:
+        example: mysql_client
+        type: string
+      dbuser:
+        example: testuser
+        type: string
+      dbuserpaswd:
+        example: password123
+        type: string
+      description:
+        example: Actor description
+        type: string
+      ip_address:
+        example: 192.168.1.100
+        type: string
+      osuser:
+        example: root
+        type: string
+      status:
+        example: active
+        type: string
+    type: object
+  controllers.DBActorMgtCreateResponse:
+    properties:
+      id:
+        example: 123
+        type: integer
+      message:
+        example: Database Actor was created successfully
+        type: string
+    type: object
+  controllers.DBActorMgtDeleteResponse:
+    properties:
+      message:
+        example: Database Actor was deleted
+        type: string
+    type: object
+  controllers.DBActorMgtUpdateRequest:
+    properties:
+      dbuser:
+        example: updated_user
+        type: string
+      dbuserpaswd:
+        example: new_password123
+        type: string
+      ip_address:
+        example: 192.168.1.101
+        type: string
+    type: object
+  controllers.DBActorMgtUpdateResponse:
+    properties:
+      message:
+        example: Database Actor was updated
+        type: string
+    type: object
+  controllers.DBMgtCreateRequest:
+    properties:
+      cntmgt:
+        example: 1
+        type: integer
+      dbname:
+        example: test_database
+        type: string
+      dbtype:
+        example: mysql
+        type: string
+      status:
+        example: active
+        type: string
+    type: object
+  controllers.DBMgtCreateResponse:
+    properties:
+      id:
+        example: 123
+        type: integer
+      message:
+        example: Database was created successfully
+        type: string
+    type: object
+  controllers.DBMgtDeleteResponse:
+    properties:
+      message:
+        example: Database was deleted successfully
+        type: string
+    type: object
+  controllers.DBObjectMgtCreateRequest:
+    properties:
+      dbmgt:
+        example: 1
+        type: integer
+      description:
+        example: Table description
+        type: string
+      objectName:
+        example: table1
+        type: string
+      objectTypeId:
+        example: 1
+        type: integer
+      sqlParam:
+        example: param1=value1
+        type: string
+      status:
+        example: active
+        type: string
+    type: object
+  controllers.DBObjectMgtCreateResponse:
+    properties:
+      id:
+        example: 123
+        type: integer
+      message:
+        example: Object was created successfully
+        type: string
+    type: object
+  controllers.DBObjectMgtDeleteResponse:
+    properties:
+      message:
+        example: Object was deleted
+        type: string
+    type: object
+  controllers.DBObjectMgtItem:
+    properties:
+      dbmgt:
+        example: 1
+        type: integer
+      description:
+        example: Table description
+        type: string
+      id:
+        example: 1
+        type: integer
+      objectName:
+        example: table1
+        type: string
+      objectTypeId:
+        example: 1
+        type: integer
+      sqlParam:
+        example: param1=value1
+        type: string
+      status:
+        example: active
+        type: string
+    type: object
+  controllers.DBObjectMgtListResponse:
+    properties:
+      message:
+        items:
+          $ref: '#/definitions/controllers.DBObjectMgtItem'
+        type: array
+    type: object
+  controllers.DBObjectMgtUpdateResponse:
+    properties:
+      message:
+        example: Object was updated
+        type: string
+    type: object
+  controllers.DBPolicyCreateRequest:
+    properties:
+      cntmgt:
+        example: 1
+        type: integer
+      dbactormgt:
+        example: 1
+        type: integer
+      dbmgt:
+        example: 1
+        type: integer
+      dbobjectmgt:
+        example: 1
+        type: integer
+      dbpolicydefault:
+        example: 1
+        type: integer
+      description:
+        example: Policy description
+        type: string
+      status:
+        example: active
+        type: string
+    type: object
+  controllers.DBPolicyCreateResponse:
+    properties:
+      id:
+        example: 123
+        type: integer
+      message:
+        example: Policy created
+        type: string
+    type: object
+  controllers.DBPolicyDeleteResponse:
+    properties:
+      message:
+        example: Policy deleted
+        type: string
+    type: object
+  controllers.DBPolicyUpdateResponse:
+    properties:
+      message:
+        example: Policy updated
+        type: string
+    type: object
+  controllers.DatabaseConnectionErrorResponse:
+    properties:
+      error:
+        example: database connection failed
+        type: string
+    type: object
+  controllers.DatabaseCreationErrorResponse:
+    properties:
+      error:
+        example: failed to create database
+        type: string
+    type: object
+  controllers.DownloadErrorResponse:
+    properties:
+      error:
+        example: internal server error
+        type: string
+      message:
+        example: failed to execute filedownload
+        type: string
+    type: object
+  controllers.DownloadJobStartResponse:
+    properties:
+      job_id:
+        example: filedownload_config_1234567890
+        type: string
+      message:
+        example: 'Download job started successfully for file: config.json'
+        type: string
+      status:
+        example: success
+        type: string
+    type: object
+  controllers.DownloadValidationErrorResponse:
+    properties:
+      error:
+        example: validation error
+        type: string
+      message:
+        example: source_path is required
+        type: string
+    type: object
+  controllers.EmptyListValidationResponse:
+    properties:
+      error:
+        example: policy IDs list cannot be empty
+        type: string
+    type: object
+  controllers.GroupAssignmentRequest:
+    properties:
+      group_ids:
+        example:
+        - 1
+        - 2
+        - 4
+        items:
+          type: integer
+        type: array
+    type: object
+  controllers.GroupAssignmentResponse:
+    properties:
+      message:
+        example: Successfully assigned 3 policies to group
+        type: string
+    type: object
+  controllers.GroupAssignmentsUpdateRequest:
+    properties:
+      actor_ids:
+        example:
+        - 521
+        - 522
+        - 523
+        items:
+          type: integer
+        type: array
+      policy_ids:
+        example:
+        - 1
+        - 2
+        - 3
+        items:
+          type: integer
+        type: array
+    required:
+    - actor_ids
+    - policy_ids
+    type: object
+  controllers.GroupAssignmentsUpdateResult:
+    properties:
+      actors_added:
+        example:
+        - 521
+        - 523
+        items:
+          type: integer
+        type: array
+      actors_removed:
+        example:
+        - 522
+        items:
+          type: integer
+        type: array
+      policies_added:
+        example:
+        - 1
+        - 3
+        items:
+          type: integer
+        type: array
+      policies_removed:
+        example:
+        - 2
+        items:
+          type: integer
+        type: array
+      total_executions:
+        example: 2
+        type: integer
+      velo_jobs_created:
+        example:
+        - job_1_allow_1735566780
+        - job_1_deny_1735566781
+        items:
+          type: string
+        type: array
+    type: object
+  controllers.GroupBulkAssignmentResponse:
+    properties:
+      errors:
+        example:
+        - '["Group 3: group not found"]'
+        items:
+          type: string
+        type: array
+      message:
+        example: Policy assigned to 2/3 groups
+        type: string
+      success_count:
+        example: 2
+        type: integer
+      total_count:
+        example: 3
+        type: integer
+    type: object
+  controllers.GroupCodeConflictResponse:
+    properties:
+      error:
+        example: group with code 'MYSQL_DEV' already exists
+        type: string
+    type: object
+  controllers.GroupCreateRequest:
+    properties:
+      code:
+        example: MYSQL_DEV
+        type: string
+      database_type_id:
+        example: 1
+        type: integer
+      description:
+        example: MySQL development team group
+        type: string
+      group_type:
+        example: CUSTOM
+        type: string
+      is_active:
+        example: true
+        type: boolean
+      is_template:
+        example: false
+        type: boolean
+      metadata:
+        example: '{"department": "IT"}'
+        type: string
+      name:
+        example: MySQL Developers
+        type: string
+      parent_group_id:
+        example: 1
+        type: integer
+    type: object
+  controllers.GroupCreateResponse:
+    properties:
+      code:
+        example: MYSQL_DEV
+        type: string
+      created_at:
+        example: "2024-01-01T00:00:00Z"
+        type: string
+      database_type_id:
+        example: 1
+        type: integer
+      description:
+        example: MySQL development team group
+        type: string
+      group_type:
+        example: CUSTOM
+        type: string
+      id:
+        example: 123
+        type: integer
+      is_active:
+        example: true
+        type: boolean
+      is_template:
+        example: false
+        type: boolean
+      metadata:
+        example: '{"department": "IT"}'
+        type: string
+      name:
+        example: MySQL Developers
+        type: string
+      parent_group_id:
+        example: 1
+        type: integer
+      updated_at:
+        example: "2024-01-01T00:00:00Z"
+        type: string
+    type: object
+  controllers.GroupCreationErrorResponse:
+    properties:
+      error:
+        example: failed to create group
+        type: string
+    type: object
+  controllers.GroupDetailsResponse:
+    properties:
+      actors:
+        items:
+          $ref: '#/definitions/controllers.ActorResponse'
+        type: array
+      group:
+        $ref: '#/definitions/controllers.GroupCreateResponse'
+      policies:
+        items:
+          $ref: '#/definitions/controllers.GroupListPolicyResponse'
+        type: array
+    type: object
+  controllers.GroupHasChildrenResponse:
+    properties:
+      error:
+        example: cannot delete group with child groups. Found 2 child groups
+        type: string
+    type: object
+  controllers.GroupListPolicyResponse:
+    properties:
+      category_id:
+        example: 1
+        type: integer
+      code:
+        example: SELECT_PERM
+        type: string
+      created_at:
+        example: "2024-01-01T00:00:00Z"
+        type: string
+      database_type_id:
+        example: 1
+        type: integer
+      dbpolicydefault_id:
+        example: 1,2,3
+        type: string
+      description:
+        example: Allow SELECT operations
+        type: string
+      id:
+        example: 1
+        type: integer
+      is_active:
+        example: true
+        type: boolean
+      is_ddl:
+        example: false
+        type: boolean
+      is_dml:
+        example: true
+        type: boolean
+      is_system:
+        example: false
+        type: boolean
+      metadata:
+        example: '{"category": "read"}'
+        type: string
+      name:
+        example: SELECT Permission
+        type: string
+      risk_level:
+        example: LOW
+        type: string
+    type: object
+  controllers.GroupNotFoundResponse:
+    properties:
+      error:
+        example: group with id=1 not found
+        type: string
+    type: object
+  controllers.InternalServerErrorResponse:
+    properties:
+      error:
+        example: database connection failed
+        type: string
+    type: object
+  controllers.InvalidActorIDResponse:
+    properties:
+      error:
+        example: invalid actor ID
+        type: string
+    type: object
+  controllers.InvalidGroupIDResponse:
+    properties:
+      error:
+        example: invalid group ID
+        type: string
+    type: object
+  controllers.InvalidPolicyIDResponse:
+    properties:
+      error:
+        example: invalid policy ID
+        type: string
+    type: object
+  controllers.JobDeleteResponse:
+    properties:
+      message:
+        example: Job removed from monitoring successfully
+        type: string
+      success:
+        example: true
+        type: boolean
+    type: object
+  controllers.JobNotFoundErrorResponse:
+    properties:
+      message:
+        example: Job not found
+        type: string
+      success:
+        example: false
+        type: boolean
+    type: object
+  controllers.JobNotificationRequest:
+    properties:
+      fileName:
+        type: string
+      md5Hash:
+        type: string
+      success:
+        type: boolean
+    required:
+    - fileName
+    - md5Hash
+    type: object
+  controllers.JobProcessingErrorResponse:
+    properties:
+      error:
+        example: failed to start background job
+        type: string
+    type: object
+  controllers.JobStartResponse:
+    properties:
+      message:
+        example: 'Background job started: job_12345'
+        type: string
+    type: object
+  controllers.JobStatusData:
+    properties:
+      created_at:
+        example: "2023-01-01T00:00:00Z"
+        type: string
+      dbmgt_id:
+        example: 1
+        type: integer
+      id:
+        example: job_12345
+        type: string
+      status:
+        example: completed
+        type: string
+    type: object
+  controllers.JobStatusErrorResponse:
+    properties:
+      message:
+        example: Job ID is required
+        type: string
+      success:
+        example: false
+        type: boolean
+    type: object
+  controllers.JobStatusListResponse:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/controllers.JobStatusData'
+        type: array
+      message:
+        example: All jobs status retrieved successfully
+        type: string
+      success:
+        example: true
+        type: boolean
+    type: object
+  controllers.JobStatusResponse:
+    properties:
+      data: {}
+      message:
+        type: string
+      success:
+        type: boolean
+    type: object
+  controllers.JobStatusSingleResponse:
+    properties:
+      data:
+        $ref: '#/definitions/controllers.JobStatusData'
+      message:
+        example: Job status retrieved successfully
+        type: string
+      success:
+        example: true
+        type: boolean
+    type: object
+  controllers.KillSessionRequest:
+    properties:
+      session_id:
+        type: string
+    required:
+    - session_id
+    type: object
+  controllers.NotFoundResponse:
+    properties:
+      error:
+        example: record not found
+        type: string
+    type: object
+  controllers.ObjectCreationErrorResponse:
+    properties:
+      error:
+        example: failed to create object
+        type: string
+    type: object
+  controllers.PDBCreateRequest:
+    properties:
+      cntmgt:
+        example: 1
+        type: integer
+      pdbname:
+        example: PDB3
+        type: string
+      sql_param:
+        example: ""
+        type: string
+    type: object
+  controllers.PDBCreateResponse:
+    properties:
+      id:
+        example: 123
+        type: integer
+      message:
+        example: PDB was created successfully
+        type: string
+    type: object
+  controllers.PDBDeleteRequest:
+    properties:
+      sql_param:
+        example: ""
+        type: string
+    type: object
+  controllers.PDBDeleteResponse:
+    properties:
+      message:
+        example: PDB was dropped successfully
+        type: string
+    type: object
+  controllers.PDBGetAllRequest:
+    properties:
+      cntmgt:
+        example: 1
+        type: integer
+    type: object
+  controllers.PDBUpdateRequest:
+    properties:
+      sql_param:
+        example: 4f50454e
+        type: string
+    type: object
+  controllers.PDBUpdateResponse:
+    properties:
+      message:
+        example: PDB was altered successfully
+        type: string
+    type: object
+  controllers.PolicyAssignmentErrorResponse:
+    properties:
+      error:
+        example: failed to assign policies to group
+        type: string
+    type: object
+  controllers.PolicyAssignmentRequest:
+    properties:
+      policy_ids:
+        example:
+        - 1
+        - 2
+        - 3
+        items:
+          type: integer
+        type: array
+    type: object
+  controllers.PolicyCreationErrorResponse:
+    properties:
+      error:
+        example: failed to create policy
+        type: string
+    type: object
+  controllers.PolicyNotFoundResponse:
+    properties:
+      error:
+        example: record not found
+        type: string
+    type: object
+  controllers.StandardErrorResponse:
+    properties:
+      error:
+        example: Invalid request body
+        type: string
+    type: object
+  controllers.SuccessResponse:
+    properties:
+      message:
+        example: Group deleted successfully
+        type: string
+    type: object
+  controllers.UploadErrorResponse:
+    properties:
+      error:
+        example: failed to execute upload
+        type: string
+      message:
+        example: connection management with id=123 not found
+        type: string
+    type: object
+  controllers.UploadJobStartResponse:
+    properties:
+      job_id:
+        example: F.C39AKJDLAKEU8VH
+        type: string
+      message:
+        example: 'Upload job started successfully for file: backup_20240101.sql'
+        type: string
+      status:
+        example: success
+        type: string
+    type: object
+  controllers.UploadValidationErrorResponse:
+    properties:
+      error:
+        example: validation failed
+        type: string
+      message:
+        example: 'invalid connection ID: must be greater than 0'
+        type: string
+    type: object
+  controllers.ValidationErrorResponse:
+    properties:
+      error:
+        example: 'Validation failed: dbuser is required'
+        type: string
+    type: object
+  controllers.VeloExecutionError:
+    properties:
+      connection_id:
+        example: 2
+        type: integer
+      error:
+        example: 'connection timeout: failed to connect to client'
+        type: string
+      operation:
+        example: allow
+        type: string
+    type: object
+  models.BackupRequest:
+    properties:
+      cnt_id:
+        example: 456
+        type: integer
+      command:
+        example: 7b2273746570733a205b7b226f72646572223a20312c2022636f6d6d616e64223a20226d7973716c64756d70202e2e2e227d5d7d
+        type: string
+      file_name:
+        example: backup_20240101.sql
+        type: string
+      job_id:
+        example: 123
+        type: integer
+      type:
+        enum:
+        - dump
+        - check_binlog
+        example: dump
+        type: string
+    required:
+    - cnt_id
+    - command
+    - job_id
+    - type
+    type: object
+  models.DownloadRequest:
+    properties:
+      cnt_id:
+        example: 456
+        type: integer
+      save_path:
+        example: /root/
+        type: string
+      source_path:
+        example: /var/data/config.json
+        type: string
+    required:
+    - cnt_id
+    - save_path
+    - source_path
+    type: object
+  models.UploadRequest:
+    properties:
+      cnt_id:
+        example: 456
+        type: integer
+      file_name:
+        example: backup_20240101.sql
+        type: string
+      file_path:
+        example: /tmp/backups/backup_20240101.sql
+        type: string
+      source_job_id:
+        example: F.C39AKJDLAKEU8VH
+        type: string
+    required:
+    - cnt_id
+    - file_name
+    - file_path
+    - source_job_id
+    type: object
+info:
+  contact: {}
+  description: DBF Artifact API
+  title: dbfartifactapi
+  version: "1.0"
+paths:
+  /api/jobs/{job_id}:
+    delete:
+      consumes:
+      - application/json
+      description: Remove a job from the monitoring system (typically for completed
+        or failed jobs)
+      parameters:
+      - description: Job ID
+        in: path
+        name: job_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/controllers.JobDeleteResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/controllers.JobStatusErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/controllers.JobNotFoundErrorResponse'
+      summary: Delete job from monitoring
+      tags:
+      - job-status
+  /api/jobs/{job_id}/notify:
+    post:
+      consumes:
+      - application/json
+      description: Allow external services to report job completion with file data
+      parameters:
+      - description: Job ID
+        in: path
+        name: job_id
+        required: true
+        type: string
+      - description: Job completion notification data
+        in: body
+        name: notification
+        required: true
+        schema:
+          $ref: '#/definitions/controllers.JobNotificationRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/controllers.JobStatusResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/controllers.JobStatusErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/controllers.JobNotFoundErrorResponse'
+      summary: Notify job completion
+      tags:
+      - job-status
+  /api/jobs/{job_id}/status:
+    get:
+      consumes:
+      - application/json
+      description: Get the current status of a background job
+      parameters:
+      - description: Job ID
+        in: path
+        name: job_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/controllers.JobStatusSingleResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/controllers.JobStatusErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/controllers.JobNotFoundErrorResponse'
+      summary: Get job status by ID
+      tags:
+      - job-status
+  /api/jobs/dbmgt/{dbmgt_id}/status:
+    get:
+      consumes:
+      - application/json
+      description: Get all jobs associated with a specific database management ID
+      parameters:
+      - description: Database Management ID
+        in: path
+        name: dbmgt_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/controllers.JobStatusListResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/controllers.JobStatusErrorResponse'
+      summary: Get jobs by database management ID
+      tags:
+      - job-status
+  /api/jobs/status:
+    get:
+      consumes:
+      - application/json
+      description: Get the current status of all background jobs. Supports optional
+        pagination via query parameters 'page' and 'page_size'
+      parameters:
+      - description: Page number (1-indexed, optional)
+        in: query
+        name: page
+        type: integer
+      - description: 'Number of items per page (optional, default: 10)'
+        in: query
+        name: page_size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/controllers.JobStatusListResponse'
+      summary: Get all jobs status
+      tags:
+      - job-status
+  /api/queries/actors/{actor_id}/groups:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves all groups assigned to a specific actor
+      parameters:
+      - description: Actor ID
+        in: path
+        name: actor_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of groups
+          schema:
+            items:
+              $ref: '#/definitions/controllers.GroupCreateResponse'
+            type: array
+        "400":
+          description: Invalid actor ID
+          schema:
+            $ref: '#/definitions/controllers.InvalidActorIDResponse'
+        "404":
+          description: Actor not found
+          schema:
+            $ref: '#/definitions/controllers.ActorNotFoundResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/controllers.InternalServerErrorResponse'
+      summary: Get actor groups
+      tags:
+      - Group Management
+  /api/queries/backup:
+    post:
+      consumes:
+      - application/json
+      description: Starts background jobs to execute backup steps (dump, binlog check,
+        etc.) via VeloArtifact. Each step is executed as a separate background job.
+        For dump type with fileName, supports both OS commands (os_execute) and SQL
+        commands (execute). For other types like check_binlog, all steps are SQL commands.
+      parameters:
+      - description: Backup request with hex-encoded command containing steps
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/models.BackupRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Background jobs started successfully with job IDs
+          schema:
+            $ref: '#/definitions/controllers.BackupJobStartResponse'
+        "400":
+          description: Invalid request body or validation error
+          schema:
+            $ref: '#/definitions/controllers.BackupValidationErrorResponse'
+        "500":
+          description: Internal server error during backup execution
+          schema:
+            $ref: '#/definitions/controllers.BackupErrorResponse'
+      summary: Execute backup operation
+      tags:
+      - Backup
+  /api/queries/connection/test/{id}:
+    post:
+      consumes:
+      - application/json
+      description: Tests connection to database and updates status in the system
+      parameters:
+      - description: Connection Management ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Connection test successful
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad request
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Connection not found
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Test database connection
+      tags:
+      - Connection
+  /api/queries/dbactormgt:
+    post:
+      consumes:
+      - application/json
+      description: Creates a new database actor management entry with specified parameters
+      parameters:
+      - description: Database Actor Management object
+        in: body
+        name: actor
+        required: true
+        schema:
+          $ref: '#/definitions/controllers.DBActorMgtCreateRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Actor created successfully
+          schema:
+            $ref: '#/definitions/controllers.DBActorMgtCreateResponse'
+        "400":
+          description: Invalid request body, validation error, or invalid IP address
+          schema:
+            $ref: '#/definitions/controllers.StandardErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/controllers.ActorCreationErrorResponse'
+      summary: Create database actor management
+      tags:
+      - DB Actor Management
+  /api/queries/dbactormgt/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Deletes an existing database actor management entry by ID
+      parameters:
+      - description: Actor Management ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Actor deleted successfully
+          schema:
+            $ref: '#/definitions/controllers.DBActorMgtDeleteResponse'
+        "400":
+          description: Invalid actor management ID
+          schema:
+            $ref: '#/definitions/controllers.StandardErrorResponse'
+        "404":
+          description: Actor not found
+          schema:
+            $ref: '#/definitions/controllers.StandardErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/controllers.InternalServerErrorResponse'
+      summary: Delete database actor management
+      tags:
+      - DB Actor Management
+    put:
+      consumes:
+      - application/json
+      description: Updates an existing database actor management entry by ID
+      parameters:
+      - description: Actor Management ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Updated Database Actor Management object
+        in: body
+        name: actor
+        required: true
+        schema:
+          $ref: '#/definitions/controllers.DBActorMgtUpdateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Actor updated successfully
+          schema:
+            $ref: '#/definitions/controllers.DBActorMgtUpdateResponse'
+        "400":
+          description: Invalid ID or request body
+          schema:
+            $ref: '#/definitions/controllers.StandardErrorResponse'
+        "404":
+          description: Actor not found
+          schema:
+            $ref: '#/definitions/controllers.StandardErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/controllers.InternalServerErrorResponse'
+      summary: Update database actor management
+      tags:
+      - DB Actor Management
+  /api/queries/dbactormgt/all:
+    post:
+      consumes:
+      - application/json
+      description: Creates all database actors for the specified connection management
+        ID
+      parameters:
+      - description: Connection Management ID parameters
+        in: body
+        name: params
+        required: true
+        schema:
+          $ref: '#/definitions/controllers.ConnectionMgtRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Actors created successfully with count
+          schema:
+            $ref: '#/definitions/controllers.BulkCreateResponse'
+        "400":
+          description: Invalid connection management ID
+          schema:
+            $ref: '#/definitions/controllers.StandardErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/controllers.ActorCreationErrorResponse'
+      summary: Create all database actors for connection management
+      tags:
+      - DB Actor Management
+  /api/queries/dbmgt:
+    post:
+      consumes:
+      - application/json
+      description: Creates a new database management entry with specified parameters
+      parameters:
+      - description: Database Management object
+        in: body
+        name: database
+        required: true
+        schema:
+          $ref: '#/definitions/controllers.DBMgtCreateRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Database created successfully
+          schema:
+            $ref: '#/definitions/controllers.DBMgtCreateResponse'
+        "400":
+          description: Invalid request body or validation error
+          schema:
+            $ref: '#/definitions/controllers.StandardErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/controllers.DatabaseCreationErrorResponse'
+      summary: Create database management
+      tags:
+      - DB Management
+  /api/queries/dbmgt/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Deletes an existing database management entry by ID
+      parameters:
+      - description: Database Management ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Database deleted successfully
+          schema:
+            $ref: '#/definitions/controllers.DBMgtDeleteResponse'
+        "400":
+          description: Invalid database management ID
+          schema:
+            $ref: '#/definitions/controllers.StandardErrorResponse'
+        "404":
+          description: Database not found
+          schema:
+            $ref: '#/definitions/controllers.StandardErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/controllers.InternalServerErrorResponse'
+      summary: Delete database management
+      tags:
+      - DB Management
+  /api/queries/dbmgt/all:
+    post:
+      consumes:
+      - application/json
+      description: Creates all databases for the specified connection management ID
+      parameters:
+      - description: Connection Management ID parameters
+        in: body
+        name: params
+        required: true
+        schema:
+          $ref: '#/definitions/controllers.ConnectionMgtRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Databases created successfully with count
+          schema:
+            $ref: '#/definitions/controllers.BulkCreateResponse'
+        "400":
+          description: Invalid connection management ID
+          schema:
+            $ref: '#/definitions/controllers.StandardErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/controllers.DatabaseCreationErrorResponse'
+      summary: Create all databases for connection management
+      tags:
+      - DB Management
+  /api/queries/dbobjectmgt:
+    post:
+      consumes:
+      - application/json
+      description: Creates a new database object management entry with specified parameters
+      parameters:
+      - description: Database Object Management object
+        in: body
+        name: object
+        required: true
+        schema:
+          $ref: '#/definitions/controllers.DBObjectMgtCreateRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Object created successfully
+          schema:
+            $ref: '#/definitions/controllers.DBObjectMgtCreateResponse'
+        "400":
+          description: Invalid request body or validation error
+          schema:
+            $ref: '#/definitions/controllers.StandardErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/controllers.ObjectCreationErrorResponse'
+      summary: Create database object management
+      tags:
+      - DB Object Management
+  /api/queries/dbobjectmgt/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Deletes an existing database object management entry by ID
+      parameters:
+      - description: Object Management ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Object deleted successfully
+          schema:
+            $ref: '#/definitions/controllers.DBObjectMgtDeleteResponse'
+        "400":
+          description: Invalid object management ID
+          schema:
+            $ref: '#/definitions/controllers.StandardErrorResponse'
+        "404":
+          description: Object not found
+          schema:
+            $ref: '#/definitions/controllers.StandardErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/controllers.InternalServerErrorResponse'
+      summary: Delete database object management
+      tags:
+      - DB Object Management
+    put:
+      consumes:
+      - application/json
+      description: Updates an existing database object management entry by ID
+      parameters:
+      - description: Object Management ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Updated Database Object Management object
+        in: body
+        name: object
+        required: true
+        schema:
+          $ref: '#/definitions/controllers.DBObjectMgtCreateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Object updated successfully
+          schema:
+            $ref: '#/definitions/controllers.DBObjectMgtUpdateResponse'
+        "400":
+          description: Invalid ID or request body
+          schema:
+            $ref: '#/definitions/controllers.StandardErrorResponse'
+        "404":
+          description: Object not found
+          schema:
+            $ref: '#/definitions/controllers.StandardErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/controllers.InternalServerErrorResponse'
+      summary: Update database object management
+      tags:
+      - DB Object Management
+  /api/queries/dbobjectmgt/cntmgt/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves all database objects associated with the specified connection
+        management ID
+      parameters:
+      - description: Connection Management ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of database objects
+          schema:
+            $ref: '#/definitions/controllers.DBObjectMgtListResponse'
+        "400":
+          description: Invalid connection management ID
+          schema:
+            $ref: '#/definitions/controllers.StandardErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/controllers.DatabaseConnectionErrorResponse'
+      summary: Get database objects by connection management ID
+      tags:
+      - DB Object Management
+  /api/queries/dbobjectmgt/dbmgt/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves all database objects associated with the specified database
+        management ID
+      parameters:
+      - description: Database Management ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of database objects
+          schema:
+            $ref: '#/definitions/controllers.DBObjectMgtListResponse'
+        "400":
+          description: Invalid database management ID
+          schema:
+            $ref: '#/definitions/controllers.StandardErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/controllers.DatabaseConnectionErrorResponse'
+      summary: Get database objects by database management ID
+      tags:
+      - DB Object Management
+  /api/queries/dbpolicy:
+    post:
+      consumes:
+      - application/json
+      description: Creates a new database policy with specified parameters
+      parameters:
+      - description: Database Policy object
+        in: body
+        name: policy
+        required: true
+        schema:
+          $ref: '#/definitions/controllers.DBPolicyCreateRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Policy created successfully with ID
+          schema:
+            $ref: '#/definitions/controllers.DBPolicyCreateResponse'
+        "400":
+          description: Invalid request body or validation error
+          schema:
+            $ref: '#/definitions/controllers.StandardErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/controllers.PolicyCreationErrorResponse'
+      summary: Create database policy
+      tags:
+      - DB Policy
+  /api/queries/dbpolicy/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Deletes an existing database policy by ID. Revokes permissions
+        via SqlUpdateDeny before removing policy record.
+      parameters:
+      - description: Policy ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Policy deleted successfully
+          schema:
+            $ref: '#/definitions/controllers.DBPolicyDeleteResponse'
+        "400":
+          description: Invalid ID
+          schema:
+            $ref: '#/definitions/controllers.StandardErrorResponse'
+        "404":
+          description: Policy not found
+          schema:
+            $ref: '#/definitions/controllers.StandardErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/controllers.InternalServerErrorResponse'
+      summary: Delete database policy
+      tags:
+      - DB Policy
+    put:
+      consumes:
+      - application/json
+      description: Updates an existing database policy by ID
+      parameters:
+      - description: Policy ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Updated Database Policy object
+        in: body
+        name: policy
+        required: true
+        schema:
+          $ref: '#/definitions/controllers.DBPolicyCreateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Policy updated successfully
+          schema:
+            $ref: '#/definitions/controllers.DBPolicyUpdateResponse'
+        "400":
+          description: Invalid ID or request body
+          schema:
+            $ref: '#/definitions/controllers.StandardErrorResponse'
+        "404":
+          description: Policy not found
+          schema:
+            $ref: '#/definitions/controllers.StandardErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/controllers.InternalServerErrorResponse'
+      summary: Update database policy
+      tags:
+      - DB Policy
+  /api/queries/dbpolicy/bulkdelete:
+    post:
+      consumes:
+      - application/json
+      description: Deletes multiple database policies by IDs. Revokes permissions
+        via SqlUpdateDeny for enabled policies before removing records. Returns count
+        of successfully deleted policies and list of failed IDs if any.
+      parameters:
+      - description: Policy IDs to delete
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/controllers.BulkDeleteDBPolicyRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Bulk delete completed with success/failure details
+          schema:
+            $ref: '#/definitions/controllers.BulkDeleteDBPolicyResponse'
+        "400":
+          description: Invalid request body or validation error
+          schema:
+            $ref: '#/definitions/controllers.StandardErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/controllers.InternalServerErrorResponse'
+      summary: Bulk delete database policies
+      tags:
+      - DB Policy
+  /api/queries/dbpolicy/bulkupdate:
+    post:
+      consumes:
+      - application/json
+      description: Compares existing policies with desired state (Cartesian product
+        of policy_defaults × objects) and executes changes via VeloArtifact background
+        job. Only updates database after successful remote execution to ensure atomic
+        consistency.
+      parameters:
+      - description: Bulk policy update request with actor, policy defaults, and objects
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/controllers.BulkPolicyUpdateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Background job started with job ID and change summary
+          schema:
+            $ref: '#/definitions/controllers.BulkPolicyUpdateJobResponse'
+        "400":
+          description: Invalid request body or validation error
+          schema:
+            $ref: '#/definitions/controllers.StandardErrorResponse'
+        "404":
+          description: Referenced entity (cntmgt, dbmgt, actor, policy, object) not
+            found
+          schema:
+            $ref: '#/definitions/controllers.NotFoundResponse'
+        "500":
+          description: Internal server error during job creation or VeloArtifact execution
+          schema:
+            $ref: '#/definitions/controllers.InternalServerErrorResponse'
+      summary: Bulk update database policies
+      tags:
+      - DB Policy
+  /api/queries/dbpolicy/cntmgt/{cntmgt}:
+    get:
+      consumes:
+      - application/json
+      description: Starts background job to generate database policies for all databases
+        under specified connection management ID
+      parameters:
+      - description: Connection Management ID
+        in: path
+        name: cntmgt
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Background job started message with job ID
+          schema:
+            $ref: '#/definitions/controllers.JobStartResponse'
+        "400":
+          description: Invalid connection management ID
+          schema:
+            $ref: '#/definitions/controllers.StandardErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/controllers.JobProcessingErrorResponse'
+      summary: Generate policies for connection management
+      tags:
+      - DB Policy
+  /api/queries/dbpolicy/dbmgt/{dbmgt}:
+    get:
+      consumes:
+      - application/json
+      description: Starts background job to generate database policies for specified
+        database management ID
+      parameters:
+      - description: Database Management ID
+        in: path
+        name: dbmgt
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Background job started message with job ID
+          schema:
+            $ref: '#/definitions/controllers.JobStartResponse'
+        "400":
+          description: Invalid database management ID
+          schema:
+            $ref: '#/definitions/controllers.StandardErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/controllers.JobProcessingErrorResponse'
+      summary: Generate policies for database management
+      tags:
+      - DB Policy
+  /api/queries/download:
+    post:
+      consumes:
+      - application/json
+      description: Starts background job to download file from server to agent. If
+        source_path is a directory, it will be compressed to tar.gz before sending.
+        The agent will verify MD5 hash and extract compressed files automatically.
+      parameters:
+      - description: Download request with connection ID, source path, and save path
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/models.DownloadRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Download job started successfully with job ID
+          schema:
+            $ref: '#/definitions/controllers.DownloadJobStartResponse'
+        "400":
+          description: Invalid request body or validation error
+          schema:
+            $ref: '#/definitions/controllers.DownloadValidationErrorResponse'
+        "500":
+          description: Internal server error during download execution
+          schema:
+            $ref: '#/definitions/controllers.DownloadErrorResponse'
+      summary: Execute file download operation
+      tags:
+      - Download
+  /api/queries/groups:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves all active database groups. Optional filter by database
+        type ID.
+      parameters:
+      - description: Filter by database type ID
+        in: query
+        name: database_type_id
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of groups
+          schema:
+            items:
+              $ref: '#/definitions/controllers.GroupCreateResponse'
+            type: array
+        "400":
+          description: Invalid database_type_id parameter
+          schema:
+            $ref: '#/definitions/controllers.ValidationErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/controllers.InternalServerErrorResponse'
+      summary: Get all database groups
+      tags:
+      - Group Management
+    post:
+      consumes:
+      - application/json
+      description: Creates a new database group with specified parameters. Group code
+        must be unique.
+      parameters:
+      - description: Database Group object
+        in: body
+        name: group
+        required: true
+        schema:
+          $ref: '#/definitions/controllers.GroupCreateRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Group created successfully
+          schema:
+            $ref: '#/definitions/controllers.GroupCreateResponse'
+        "400":
+          description: Invalid request body or validation error
+          schema:
+            $ref: '#/definitions/controllers.ValidationErrorResponse'
+        "409":
+          description: Group code already exists
+          schema:
+            $ref: '#/definitions/controllers.GroupCodeConflictResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/controllers.GroupCreationErrorResponse'
+      summary: Create database group
+      tags:
+      - Group Management
+  /api/queries/groups/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Deletes a database group and all its associations. Cannot delete
+        groups with child groups.
+      parameters:
+      - description: Group ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Group deleted successfully
+          schema:
+            $ref: '#/definitions/controllers.SuccessResponse'
+        "400":
+          description: Invalid group ID
+          schema:
+            $ref: '#/definitions/controllers.InvalidGroupIDResponse'
+        "404":
+          description: Group not found
+          schema:
+            $ref: '#/definitions/controllers.GroupNotFoundResponse'
+        "409":
+          description: Group has child groups
+          schema:
+            $ref: '#/definitions/controllers.GroupHasChildrenResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/controllers.InternalServerErrorResponse'
+      summary: Delete database group
+      tags:
+      - Group Management
+    get:
+      consumes:
+      - application/json
+      description: Retrieves a database group with specified ID
+      parameters:
+      - description: Group ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Group details
+          schema:
+            $ref: '#/definitions/controllers.GroupCreateResponse'
+        "400":
+          description: Invalid group ID
+          schema:
+            $ref: '#/definitions/controllers.InvalidGroupIDResponse'
+        "404":
+          description: Group not found
+          schema:
+            $ref: '#/definitions/controllers.GroupNotFoundResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/controllers.InternalServerErrorResponse'
+      summary: Get database group by ID
+      tags:
+      - Group Management
+    put:
+      consumes:
+      - application/json
+      description: Updates an existing database group with specified ID. Code must
+        remain unique.
+      parameters:
+      - description: Group ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Database Group object
+        in: body
+        name: group
+        required: true
+        schema:
+          $ref: '#/definitions/controllers.GroupCreateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Group updated successfully
+          schema:
+            $ref: '#/definitions/controllers.GroupCreateResponse'
+        "400":
+          description: Invalid group ID or request body
+          schema:
+            $ref: '#/definitions/controllers.InvalidGroupIDResponse'
+        "404":
+          description: Group not found
+          schema:
+            $ref: '#/definitions/controllers.GroupNotFoundResponse'
+        "409":
+          description: Group code already exists
+          schema:
+            $ref: '#/definitions/controllers.GroupCodeConflictResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/controllers.GroupCreationErrorResponse'
+      summary: Update database group
+      tags:
+      - Group Management
+  /api/queries/groups/{id}/actors:
+    delete:
+      consumes:
+      - application/json
+      description: Removes multiple actors from a database group. Sends VeloArtifact
+        deny commands to clients before updating database. Supports partial success
+        - if some VeloArtifact operations fail, the operation continues with successful
+        ones. Returns detailed execution status including success/failure information
+        for each VeloArtifact job.
+      parameters:
+      - description: Group ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Actor IDs to remove
+        in: body
+        name: actors
+        required: true
+        schema:
+          $ref: '#/definitions/controllers.ActorAssignmentRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Actors removed with detailed execution status
+          schema:
+            $ref: '#/definitions/controllers.ActorRemovalResult'
+        "400":
+          description: Empty actor list
+          schema:
+            $ref: '#/definitions/controllers.EmptyListValidationResponse'
+        "404":
+          description: Group not found
+          schema:
+            $ref: '#/definitions/controllers.GroupNotFoundResponse'
+        "500":
+          description: All VeloArtifact operations failed or actor removal failed
+          schema:
+            $ref: '#/definitions/controllers.ActorAssignmentErrorResponse'
+      summary: Remove actors from group
+      tags:
+      - Group Management
+    get:
+      consumes:
+      - application/json
+      description: Retrieves all active actors assigned to a database group
+      parameters:
+      - description: Group ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of actors
+          schema:
+            items:
+              $ref: '#/definitions/controllers.ActorResponse'
+            type: array
+        "400":
+          description: Invalid group ID
+          schema:
+            $ref: '#/definitions/controllers.InvalidGroupIDResponse'
+        "404":
+          description: Group not found
+          schema:
+            $ref: '#/definitions/controllers.GroupNotFoundResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/controllers.InternalServerErrorResponse'
+      summary: Get group actors
+      tags:
+      - Group Management
+    post:
+      consumes:
+      - application/json
+      description: Assigns multiple actors to a database group. Sends VeloArtifact
+        allow commands to clients before updating database. Supports partial success
+        - if some VeloArtifact operations fail, the operation continues with successful
+        ones. Returns detailed execution status including success/failure information
+        for each VeloArtifact job.
+      parameters:
+      - description: Group ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Actor IDs to assign
+        in: body
+        name: actors
+        required: true
+        schema:
+          $ref: '#/definitions/controllers.ActorAssignmentRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Actors assigned with detailed execution status
+          schema:
+            $ref: '#/definitions/controllers.ActorAssignmentResult'
+        "400":
+          description: Empty actor list
+          schema:
+            $ref: '#/definitions/controllers.EmptyListValidationResponse'
+        "404":
+          description: Group not found
+          schema:
+            $ref: '#/definitions/controllers.GroupNotFoundResponse'
+        "500":
+          description: All VeloArtifact operations failed or actor assignment failed
+          schema:
+            $ref: '#/definitions/controllers.ActorAssignmentErrorResponse'
+      summary: Assign actors to group
+      tags:
+      - Group Management
+  /api/queries/groups/{id}/assignments:
+    put:
+      consumes:
+      - application/json
+      description: Updates both policies and actors for a group with minimal VeloArtifact
+        executions. This is the optimized alternative to individual assignment operations.
+      parameters:
+      - description: Group ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: New policy and actor assignments
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/controllers.GroupAssignmentsUpdateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Group assignments updated successfully with optimization details
+          schema:
+            $ref: '#/definitions/controllers.GroupAssignmentsUpdateResult'
+        "400":
+          description: Invalid group ID or request
+          schema:
+            $ref: '#/definitions/controllers.InvalidGroupIDResponse'
+        "404":
+          description: Group not found
+          schema:
+            $ref: '#/definitions/controllers.GroupNotFoundResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/controllers.InternalServerErrorResponse'
+      summary: Update group assignments (optimized)
+      tags:
+      - Group Management
+  /api/queries/groups/{id}/details:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves group details along with assigned policies and actors
+      parameters:
+      - description: Group ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Comprehensive group information
+          schema:
+            $ref: '#/definitions/controllers.GroupDetailsResponse'
+        "400":
+          description: Invalid group ID
+          schema:
+            $ref: '#/definitions/controllers.InvalidGroupIDResponse'
+        "404":
+          description: Group not found
+          schema:
+            $ref: '#/definitions/controllers.GroupNotFoundResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/controllers.InternalServerErrorResponse'
+      summary: Get comprehensive group details
+      tags:
+      - Group Management
+  /api/queries/groups/{id}/policies:
+    delete:
+      consumes:
+      - application/json
+      description: Removes multiple policies from a database group
+      parameters:
+      - description: Group ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Policy IDs to remove
+        in: body
+        name: policies
+        required: true
+        schema:
+          $ref: '#/definitions/controllers.PolicyAssignmentRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Policies removed successfully
+          schema:
+            $ref: '#/definitions/controllers.GroupAssignmentResponse'
+        "400":
+          description: Empty policy list
+          schema:
+            $ref: '#/definitions/controllers.EmptyListValidationResponse'
+        "404":
+          description: Group not found
+          schema:
+            $ref: '#/definitions/controllers.GroupNotFoundResponse'
+        "500":
+          description: Policy removal failed
+          schema:
+            $ref: '#/definitions/controllers.PolicyAssignmentErrorResponse'
+      summary: Remove policies from group
+      tags:
+      - Group Management
+    get:
+      consumes:
+      - application/json
+      description: Retrieves all active policies assigned to a database group
+      parameters:
+      - description: Group ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of policies
+          schema:
+            items:
+              $ref: '#/definitions/controllers.GroupListPolicyResponse'
+            type: array
+        "400":
+          description: Invalid group ID
+          schema:
+            $ref: '#/definitions/controllers.InvalidGroupIDResponse'
+        "404":
+          description: Group not found
+          schema:
+            $ref: '#/definitions/controllers.GroupNotFoundResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/controllers.InternalServerErrorResponse'
+      summary: Get group policies
+      tags:
+      - Group Management
+    post:
+      consumes:
+      - application/json
+      description: Assigns multiple policies to a database group
+      parameters:
+      - description: Group ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Policy IDs to assign
+        in: body
+        name: policies
+        required: true
+        schema:
+          $ref: '#/definitions/controllers.PolicyAssignmentRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Policies assigned successfully
+          schema:
+            $ref: '#/definitions/controllers.GroupAssignmentResponse'
+        "400":
+          description: Empty policy list
+          schema:
+            $ref: '#/definitions/controllers.EmptyListValidationResponse'
+        "404":
+          description: Group not found
+          schema:
+            $ref: '#/definitions/controllers.GroupNotFoundResponse'
+        "500":
+          description: Policy assignment failed
+          schema:
+            $ref: '#/definitions/controllers.PolicyAssignmentErrorResponse'
+      summary: Assign policies to group
+      tags:
+      - Group Management
+  /api/queries/pdb:
+    post:
+      consumes:
+      - application/json
+      description: Creates a new Oracle Pluggable Database on the remote server and
+        registers it locally
+      parameters:
+      - description: PDB creation parameters
+        in: body
+        name: pdb
+        required: true
+        schema:
+          $ref: '#/definitions/controllers.PDBCreateRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: PDB created successfully
+          schema:
+            $ref: '#/definitions/controllers.PDBCreateResponse'
+        "400":
+          description: Invalid request body or validation error
+          schema:
+            $ref: '#/definitions/controllers.StandardErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/controllers.DatabaseCreationErrorResponse'
+      summary: Create PDB
+      tags:
+      - PDB Management
+  /api/queries/pdb/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Drops a Pluggable Database on the remote Oracle server and removes
+        local record
+      parameters:
+      - description: PDB Connection Management ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Optional DROP parameters
+        in: body
+        name: params
+        schema:
+          $ref: '#/definitions/controllers.PDBDeleteRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: PDB dropped successfully
+          schema:
+            $ref: '#/definitions/controllers.PDBDeleteResponse'
+        "400":
+          description: Invalid PDB connection management ID
+          schema:
+            $ref: '#/definitions/controllers.StandardErrorResponse'
+        "404":
+          description: PDB not found
+          schema:
+            $ref: '#/definitions/controllers.StandardErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/controllers.InternalServerErrorResponse'
+      summary: Drop PDB
+      tags:
+      - PDB Management
+    put:
+      consumes:
+      - application/json
+      description: Executes ALTER PLUGGABLE DATABASE on the remote Oracle server
+      parameters:
+      - description: PDB Connection Management ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: PDB alter parameters
+        in: body
+        name: pdb
+        required: true
+        schema:
+          $ref: '#/definitions/controllers.PDBUpdateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: PDB altered successfully
+          schema:
+            $ref: '#/definitions/controllers.PDBUpdateResponse'
+        "400":
+          description: Invalid ID or request body
+          schema:
+            $ref: '#/definitions/controllers.StandardErrorResponse'
+        "404":
+          description: PDB not found
+          schema:
+            $ref: '#/definitions/controllers.StandardErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/controllers.InternalServerErrorResponse'
+      summary: Alter PDB
+      tags:
+      - PDB Management
+  /api/queries/pdb/all:
+    post:
+      consumes:
+      - application/json
+      description: Queries DBA_PDBS on the remote Oracle server and synchronizes local
+        PDB records
+      parameters:
+      - description: CDB Connection Management ID
+        in: body
+        name: params
+        required: true
+        schema:
+          $ref: '#/definitions/controllers.PDBGetAllRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: PDBs synchronized successfully with count
+          schema:
+            $ref: '#/definitions/controllers.BulkCreateResponse'
+        "400":
+          description: Invalid connection management ID
+          schema:
+            $ref: '#/definitions/controllers.StandardErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/controllers.DatabaseCreationErrorResponse'
+      summary: Synchronize all PDBs for CDB connection
+      tags:
+      - PDB Management
+  /api/queries/policies/{policy_id}/assign-groups:
+    post:
+      consumes:
+      - application/json
+      description: Assigns a single policy to multiple database groups. Returns partial
+        success if some groups fail.
+      parameters:
+      - description: Policy ID
+        in: path
+        name: policy_id
+        required: true
+        type: integer
+      - description: Group IDs to assign policy to
+        in: body
+        name: groups
+        required: true
+        schema:
+          $ref: '#/definitions/controllers.GroupAssignmentRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Policy assigned to all groups successfully
+          schema:
+            $ref: '#/definitions/controllers.GroupBulkAssignmentResponse'
+        "206":
+          description: Policy assigned to some groups (partial success)
+          schema:
+            $ref: '#/definitions/controllers.GroupBulkAssignmentResponse'
+        "400":
+          description: Empty group list
+          schema:
+            $ref: '#/definitions/controllers.EmptyListValidationResponse'
+        "404":
+          description: Policy not found
+          schema:
+            $ref: '#/definitions/controllers.PolicyNotFoundResponse'
+        "500":
+          description: Policy assignment failed
+          schema:
+            $ref: '#/definitions/controllers.PolicyAssignmentErrorResponse'
+      summary: Bulk assign policy to groups
+      tags:
+      - Group Management
+  /api/queries/policies/{policy_id}/groups:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves all groups assigned to a specific policy
+      parameters:
+      - description: Policy ID
+        in: path
+        name: policy_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of groups
+          schema:
+            items:
+              $ref: '#/definitions/controllers.GroupCreateResponse'
+            type: array
+        "400":
+          description: Invalid policy ID
+          schema:
+            $ref: '#/definitions/controllers.InvalidPolicyIDResponse'
+        "404":
+          description: Policy not found
+          schema:
+            $ref: '#/definitions/controllers.PolicyNotFoundResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/controllers.InternalServerErrorResponse'
+      summary: Get policy groups
+      tags:
+      - Group Management
+  /api/queries/policy-compliance/start/{id}:
+    post:
+      consumes:
+      - application/json
+      description: Initiates policy compliance check for the specified connection
+        management ID
+      parameters:
+      - description: Connection Management ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Policy compliance check started
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Invalid connection management ID
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Start policy compliance check
+      tags:
+      - Policy Compliance
+  /api/queries/session/kill/{cntid}:
+    post:
+      consumes:
+      - application/json
+      description: Kills a specific database session using connection management ID
+        and session ID
+      parameters:
+      - description: Connection Management ID
+        in: path
+        name: cntid
+        required: true
+        type: integer
+      - description: Session ID to kill
+        in: body
+        name: killSessionRequest
+        required: true
+        schema:
+          $ref: '#/definitions/controllers.KillSessionRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Kill session command executed successfully for session ID on
+            connection ID
+          schema:
+            $ref: '#/definitions/controllers.JobStartResponse'
+        "400":
+          description: Invalid request parameters
+          schema:
+            $ref: '#/definitions/controllers.StandardErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/controllers.JobProcessingErrorResponse'
+      summary: Kill database session
+      tags:
+      - Session Management
+  /api/queries/upload:
+    post:
+      consumes:
+      - application/json
+      description: Starts background job to upload file from client to server via
+        VeloArtifact. The upload operation uses the source job ID to locate the file
+        on the client, then uploads it to the specified path on the server.
+      parameters:
+      - description: Upload request with connection ID, source job ID, file name,
+          and file path
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/models.UploadRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Upload job started successfully with job ID
+          schema:
+            $ref: '#/definitions/controllers.UploadJobStartResponse'
+        "400":
+          description: Invalid request body or validation error
+          schema:
+            $ref: '#/definitions/controllers.UploadValidationErrorResponse'
+        "500":
+          description: Internal server error during upload execution
+          schema:
+            $ref: '#/definitions/controllers.UploadErrorResponse'
+      summary: Execute file upload operation
+      tags:
+      - Upload
+swagger: "2.0"
