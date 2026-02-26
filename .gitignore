@@ -92,3 +92,5 @@ worktrees/
 .vscode
 .opencode
 nul
+.exe
+release-manifest.json
