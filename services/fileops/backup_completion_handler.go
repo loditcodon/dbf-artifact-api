@@ -1,4 +1,4 @@
-package services
+package fileops
 
 import (
 	"encoding/json"
@@ -10,11 +10,12 @@ import (
 
 	"dbfartifactapi/config"
 	"dbfartifactapi/pkg/logger"
+	"dbfartifactapi/services"
 )
 
 // CreateBackupCompletionHandler creates a callback function for backup job completion
-func CreateBackupCompletionHandler() JobCompletionCallback {
-	return func(jobID string, jobInfo *JobInfo, statusResp *StatusResponse) error {
+func CreateBackupCompletionHandler() services.JobCompletionCallback {
+	return func(jobID string, jobInfo *services.JobInfo, statusResp *services.StatusResponse) error {
 		logger.Infof("Processing backup completion for job %s, status: %s", jobID, statusResp.Status)
 
 		contextData, ok := jobInfo.ContextData["backup_context"]
@@ -31,12 +32,12 @@ func CreateBackupCompletionHandler() JobCompletionCallback {
 // CreateBackupSubJobCompletionHandler creates callback for OS sub-job completion.
 // Critical for accurate master job status - ensures failed sub-jobs cause master job failure.
 // Returns JobCompletionCallback that handles sub-job status aggregation.
-func CreateBackupSubJobCompletionHandler(masterJobID string) JobCompletionCallback {
-	return func(subJobID string, jobInfo *JobInfo, statusResp *StatusResponse) error {
+func CreateBackupSubJobCompletionHandler(masterJobID string) services.JobCompletionCallback {
+	return func(subJobID string, jobInfo *services.JobInfo, statusResp *services.StatusResponse) error {
 		logger.Infof("Processing backup sub-job completion: sub_job=%s, master=%s, status=%s",
 			subJobID, masterJobID, statusResp.Status)
 
-		jobMonitor := GetJobMonitorService()
+		jobMonitor := services.GetJobMonitorService()
 
 		// Store OS execution results from agent response to sub-job
 		if len(statusResp.Results) > 0 {
@@ -169,7 +170,7 @@ func CreateBackupSubJobCompletionHandler(masterJobID string) JobCompletionCallba
 }
 
 // processBackupResults processes the results of a completed backup job
-func processBackupResults(jobID string, contextData interface{}, statusResp *StatusResponse, jobInfo *JobInfo) error {
+func processBackupResults(jobID string, contextData interface{}, statusResp *services.StatusResponse, jobInfo *services.JobInfo) error {
 	logger.Infof("Processing backup results for job %s - completed: %d, failed: %d",
 		jobID, statusResp.Completed, statusResp.Failed)
 
@@ -195,7 +196,7 @@ func processBackupResults(jobID string, contextData interface{}, statusResp *Sta
 }
 
 // processBackupResultsFromNotification handles backup processing when triggered by external notification
-func processBackupResultsFromNotification(jobID string, backupContext *BackupJobContext, notificationData interface{}, statusResp *StatusResponse, jobInfo *JobInfo) error {
+func processBackupResultsFromNotification(jobID string, backupContext *BackupJobContext, notificationData interface{}, statusResp *services.StatusResponse, jobInfo *services.JobInfo) error {
 	logger.Infof("Processing backup results from notification for job %s", jobID)
 
 	notification, ok := notificationData.(map[string]interface{})
@@ -246,7 +247,7 @@ func processBackupResultsFromNotification(jobID string, backupContext *BackupJob
 	logger.Infof("Successfully confirmed backup file at %s for fileName=%s (os_job=%s)", localFilePath, fileName, foundJob)
 
 	// Update master job results with file path
-	jobMonitor := GetJobMonitorService()
+	jobMonitor := services.GetJobMonitorService()
 	results := map[string]interface{}{
 		"backup_file": map[string]interface{}{
 			"fileName": fileName,
@@ -264,7 +265,7 @@ func processBackupResultsFromNotification(jobID string, backupContext *BackupJob
 }
 
 // processBackupResultsFromVeloArtifact handles backup processing using VeloArtifact polling flow
-func processBackupResultsFromVeloArtifact(jobID string, backupContext *BackupJobContext, statusResp *StatusResponse, jobInfo *JobInfo) error {
+func processBackupResultsFromVeloArtifact(jobID string, backupContext *BackupJobContext, statusResp *services.StatusResponse, jobInfo *services.JobInfo) error {
 	logger.Infof("Processing backup results from VeloArtifact polling for job %s", jobID)
 
 	logger.Infof("Backup job completed via VeloArtifact polling: job_id=%s, status=%s, completed=%d, failed=%d",
@@ -282,7 +283,7 @@ func processBackupResultsFromVeloArtifact(jobID string, backupContext *BackupJob
 		}
 
 		// Update job results with proper locking
-		jobMonitor := GetJobMonitorService()
+		jobMonitor := services.GetJobMonitorService()
 		jobMonitor.UpdateJobResults(jobID, results)
 
 		logger.Infof("Populated %d step results for job %s", len(sqlStepResults), jobID)

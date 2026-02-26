@@ -5,16 +5,16 @@ import (
 
 	"dbfartifactapi/models"
 	"dbfartifactapi/pkg/logger"
-	"dbfartifactapi/services"
+	"dbfartifactapi/services/fileops"
 	"dbfartifactapi/utils"
 
 	"github.com/gin-gonic/gin"
 )
 
-var backupSrv = services.NewBackupService()
+var backupSrv = fileops.NewBackupService()
 
 // SetBackupService initializes the database backup service instance.
-func SetBackupService(srv services.BackupService) {
+func SetBackupService(srv fileops.BackupService) {
 	backupSrv = srv
 }
 

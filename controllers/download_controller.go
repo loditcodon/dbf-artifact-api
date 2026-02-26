@@ -5,16 +5,16 @@ import (
 
 	"dbfartifactapi/models"
 	"dbfartifactapi/pkg/logger"
-	"dbfartifactapi/services"
+	"dbfartifactapi/services/fileops"
 	"dbfartifactapi/utils"
 
 	"github.com/gin-gonic/gin"
 )
 
-var downloadSrv = services.NewDownloadService()
+var downloadSrv = fileops.NewDownloadService()
 
 // SetDownloadService initializes the file download service instance.
-func SetDownloadService(srv services.DownloadService) {
+func SetDownloadService(srv fileops.DownloadService) {
 	downloadSrv = srv
 }
 

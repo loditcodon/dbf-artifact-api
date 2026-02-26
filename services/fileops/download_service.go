@@ -1,4 +1,4 @@
-package services
+package fileops
 
 import (
 	"context"
@@ -11,6 +11,7 @@ import (
 	"dbfartifactapi/models"
 	"dbfartifactapi/pkg/logger"
 	"dbfartifactapi/repository"
+	"dbfartifactapi/services"
 	"dbfartifactapi/services/agent"
 	"dbfartifactapi/utils"
 )
@@ -133,7 +134,7 @@ func (s *downloadService) ExecuteDownload(ctx context.Context, req models.Downlo
 			IsCompressed: isCompressed,
 		},
 	}
-	jobMonitor := GetJobMonitorService()
+	jobMonitor := services.GetJobMonitorService()
 	jobMonitor.AddJobWithCallback(jobResp.JobID, 0, ep.ClientID, ep.OsType, completionCallback, contextData)
 
 	logger.Infof("Download job started successfully: job_id=%s", jobResp.JobID)

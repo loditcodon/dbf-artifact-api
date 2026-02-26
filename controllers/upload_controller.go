@@ -5,16 +5,16 @@ import (
 
 	"dbfartifactapi/models"
 	"dbfartifactapi/pkg/logger"
-	"dbfartifactapi/services"
+	"dbfartifactapi/services/fileops"
 	"dbfartifactapi/utils"
 
 	"github.com/gin-gonic/gin"
 )
 
-var uploadSrv = services.NewUploadService()
+var uploadSrv = fileops.NewUploadService()
 
 // SetUploadService initializes the file upload service instance.
-func SetUploadService(srv services.UploadService) {
+func SetUploadService(srv fileops.UploadService) {
 	uploadSrv = srv
 }
 
