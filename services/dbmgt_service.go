@@ -2,16 +2,18 @@ package services
 
 import (
 	"context"
-	"dbfartifactapi/bootstrap"
-	"dbfartifactapi/models"
-	"dbfartifactapi/pkg/logger"
-	"dbfartifactapi/repository"
-	"dbfartifactapi/services/dto"
-	"dbfartifactapi/utils"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"strings"
+
+	"dbfartifactapi/bootstrap"
+	"dbfartifactapi/models"
+	"dbfartifactapi/pkg/logger"
+	"dbfartifactapi/repository"
+	"dbfartifactapi/services/agent"
+	"dbfartifactapi/services/dto"
+	"dbfartifactapi/utils"
 )
 
 // DBMgtService provides business logic for database management operations.
@@ -127,7 +129,7 @@ func (s *dbMgtService) CreateAll(ctx context.Context, cntMgtID uint) (int, error
 	}
 	logger.Debugf("Created agent command JSON payload (hex): %s", hexJSON)
 
-	stdout, err := executeSqlAgentAPI(clientID, ep.OsType, "execute", hexJSON, "", true)
+	stdout, err := agent.ExecuteSqlAgentAPI(clientID, ep.OsType, "execute", hexJSON, "", true)
 	if err != nil {
 		tx.Rollback()
 		return 0, fmt.Errorf("executeSqlAgentAPI error: %v", err)
@@ -308,7 +310,7 @@ func (s *dbMgtService) Create(ctx context.Context, data models.DBMgt) (*models.D
 	}
 	logger.Debugf("Created agent command JSON payload (hex): %s", hexJSON)
 
-	_, err = executeSqlAgentAPI(clientID, ep.OsType, "execute", hexJSON, "", false)
+	_, err = agent.ExecuteSqlAgentAPI(clientID, ep.OsType, "execute", hexJSON, "", false)
 	if err != nil {
 		tx.Rollback()
 		return nil, fmt.Errorf("failed to create database %s on remote server: %w", data.DbName, err)
@@ -390,7 +392,7 @@ func (s *dbMgtService) Delete(ctx context.Context, id uint) error {
 	}
 	logger.Debugf("Created agent command JSON payload (hex): %s", hexJSON)
 
-	_, err = executeSqlAgentAPI(clientID, ep.OsType, "execute", hexJSON, "", false)
+	_, err = agent.ExecuteSqlAgentAPI(clientID, ep.OsType, "execute", hexJSON, "", false)
 	if err != nil {
 		tx.Rollback()
 		return fmt.Errorf("failed to delete database %s on remote server: %w", existing.DbName, err)

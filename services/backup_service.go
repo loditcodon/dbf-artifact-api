@@ -10,6 +10,7 @@ import (
 	"dbfartifactapi/models"
 	"dbfartifactapi/pkg/logger"
 	"dbfartifactapi/repository"
+	"dbfartifactapi/services/agent"
 	"dbfartifactapi/services/dto"
 	"dbfartifactapi/utils"
 )
@@ -156,7 +157,7 @@ func (s *backupService) ExecuteBackup(ctx context.Context, req models.BackupRequ
 					tx.Rollback()
 					return "", "", fmt.Errorf("failed to create OS artifact for step %d: %v", step.Order, osErr)
 				}
-				stdout, err = executeSqlAgentAPI(ep.ClientID, ep.OsType, "os_execute", hexJSON, osOption, true)
+				stdout, err = agent.ExecuteSqlAgentAPI(ep.ClientID, ep.OsType, "os_execute", hexJSON, osOption, true)
 			} else if step.Type == "sql" {
 				// SQL command: result available immediately in response
 				hexJSON, sqlErr := s.createSQLExecuteArtifact(step.Command, cmt)
@@ -164,7 +165,7 @@ func (s *backupService) ExecuteBackup(ctx context.Context, req models.BackupRequ
 					tx.Rollback()
 					return "", "", fmt.Errorf("failed to create SQL artifact for step %d: %v", step.Order, sqlErr)
 				}
-				stdout, err = executeSqlAgentAPI(ep.ClientID, ep.OsType, "execute", hexJSON, "", true)
+				stdout, err = agent.ExecuteSqlAgentAPI(ep.ClientID, ep.OsType, "execute", hexJSON, "", true)
 			} else {
 				tx.Rollback()
 				return "", "", fmt.Errorf("unsupported step type: %s", step.Type)
@@ -281,7 +282,7 @@ func (s *backupService) ExecuteBackup(ctx context.Context, req models.BackupRequ
 				return "", "", fmt.Errorf("failed to create OS artifact for step %d: %v", step.Order, osErr)
 			}
 
-			stdout, err := executeSqlAgentAPI(ep.ClientID, ep.OsType, "os_execute", hexJSON, osOption, true)
+			stdout, err := agent.ExecuteSqlAgentAPI(ep.ClientID, ep.OsType, "os_execute", hexJSON, osOption, true)
 			if err != nil {
 				logger.Errorf("executeSqlAgentAPI error for OS step %d: %v", step.Order, err)
 				tx.Rollback()
@@ -350,7 +351,7 @@ func (s *backupService) ExecuteBackup(ctx context.Context, req models.BackupRequ
 			}
 
 			// Execute this step immediately
-			stdout, err := executeSqlAgentAPI(ep.ClientID, ep.OsType, "execute", hexJSON, "", true)
+			stdout, err := agent.ExecuteSqlAgentAPI(ep.ClientID, ep.OsType, "execute", hexJSON, "", true)
 			if err != nil {
 				logger.Errorf("executeSqlAgentAPI error for step %d: %v", step.Order, err)
 				tx.Rollback()

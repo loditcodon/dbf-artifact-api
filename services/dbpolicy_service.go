@@ -16,6 +16,7 @@ import (
 	"dbfartifactapi/models"
 	"dbfartifactapi/pkg/logger"
 	"dbfartifactapi/repository"
+	"dbfartifactapi/services/agent"
 	"dbfartifactapi/services/dto"
 
 	"dbfartifactapi/utils"
@@ -381,7 +382,7 @@ func (s *dbPolicyService) executePolicyUpdateSql(ctx context.Context, sqlcmd str
 		return fmt.Errorf("failed to create agent command JSON: %v", err)
 	}
 
-	_, err = executeSqlAgentAPI(ep.ClientID, ep.OsType, "execute", hexJSON, "", false)
+	_, err = agent.ExecuteSqlAgentAPI(ep.ClientID, ep.OsType, "execute", hexJSON, "", false)
 	if err != nil {
 		return fmt.Errorf("executeSqlAgentAPI error: %v", err)
 	}
@@ -608,7 +609,7 @@ func (s *dbPolicyService) GetByCntMgtWithPrivilegeSession(ctx context.Context, i
 	}
 
 	// Start background job
-	stdout, err := executeSqlAgentAPI(ep.ClientID, ep.OsType, "download", hexJSON, "--background", true)
+	stdout, err := agent.ExecuteSqlAgentAPI(ep.ClientID, ep.OsType, "download", hexJSON, "--background", true)
 	if err != nil {
 		return "", fmt.Errorf("failed to start agent API job: %v", err)
 	}
@@ -746,7 +747,7 @@ func (s *dbPolicyService) GetByCntMgtWithOraclePrivilegeSession(ctx context.Cont
 	}
 
 	// Start background job
-	stdout, err := executeSqlAgentAPI(ep.ClientID, ep.OsType, "download", hexJSON, "--background", true)
+	stdout, err := agent.ExecuteSqlAgentAPI(ep.ClientID, ep.OsType, "download", hexJSON, "--background", true)
 	if err != nil {
 		return "", fmt.Errorf("failed to start oracle agent API job: %v", err)
 	}
@@ -1075,7 +1076,7 @@ func (s *dbPolicyService) BulkUpdatePoliciesByActor(ctx context.Context, req dto
 	}
 
 	// Start background job
-	stdout, err := executeSqlAgentAPI(ep.ClientID, ep.OsType, "download", hexJSON, "--background", true)
+	stdout, err := agent.ExecuteSqlAgentAPI(ep.ClientID, ep.OsType, "download", hexJSON, "--background", true)
 	if err != nil {
 		return "", fmt.Errorf("failed to start agent API job: %v", err)
 	}

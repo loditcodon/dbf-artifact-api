@@ -12,6 +12,7 @@ import (
 	"dbfartifactapi/models"
 	"dbfartifactapi/pkg/logger"
 	"dbfartifactapi/repository"
+	"dbfartifactapi/services/agent"
 	"dbfartifactapi/services/dto"
 	"dbfartifactapi/utils"
 
@@ -1657,7 +1658,7 @@ func (s *groupManagementService) executeBatchSQLForConnection(ctx context.Contex
 		}
 
 		// Execute via agent API with batch SQL
-		result, err := executeSqlAgentAPI(ep.ClientID, ep.OsType, "execute", hexJSON, "", false)
+		result, err := agent.ExecuteSqlAgentAPI(ep.ClientID, ep.OsType, "execute", hexJSON, "", false)
 		if err != nil {
 			return "", fmt.Errorf("executeSqlAgentAPI error for connection %d batch %d: %v", execution.ConnectionID, batchNum, err)
 		}

@@ -12,6 +12,7 @@ import (
 	"dbfartifactapi/models"
 	"dbfartifactapi/pkg/logger"
 	"dbfartifactapi/repository"
+	"dbfartifactapi/services/agent"
 	"dbfartifactapi/utils"
 
 	"gorm.io/gorm"
@@ -191,7 +192,7 @@ func getEndpointForJob(jobID string, endpointID uint) (*models.Endpoint, error) 
 // retrieveJobResults gets results from VeloArtifact and downloads the results file
 func retrieveJobResults(jobID string, ep *models.Endpoint) ([]QueryResult, error) {
 	// Get results from agent using getresults command
-	resultsOutput, err := executeAgentAPISimpleCommand(ep.ClientID, ep.OsType, "getresults", jobID, "", true)
+	resultsOutput, err := agent.ExecuteAgentAPISimpleCommand(ep.ClientID, ep.OsType, "getresults", jobID, "", true)
 	if err != nil {
 		logger.Errorf("Failed to get results for job %s: %v", jobID, err)
 		return nil, fmt.Errorf("failed to get results: %v", err)
@@ -213,7 +214,7 @@ func retrieveJobResults(jobID string, ep *models.Endpoint) ([]QueryResult, error
 		jobID, getResultsResp.FilePath, getResultsResp.TotalQueries, getResultsResp.Completed, getResultsResp.Failed)
 
 	// Download the results file from agent
-	downloadResp, err := downloadFileAgentAPI(ep.ClientID, getResultsResp.FilePath, ep.OsType)
+	downloadResp, err := agent.DownloadFileAgentAPI(ep.ClientID, getResultsResp.FilePath, ep.OsType)
 	if err != nil {
 		logger.Errorf("Failed to download results file for job %s: %v", jobID, err)
 		return nil, fmt.Errorf("failed to download results file: %v", err)

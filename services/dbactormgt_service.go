@@ -12,6 +12,7 @@ import (
 	"dbfartifactapi/models"
 	"dbfartifactapi/pkg/logger"
 	"dbfartifactapi/repository"
+	"dbfartifactapi/services/agent"
 	"dbfartifactapi/services/dto"
 	"dbfartifactapi/utils"
 
@@ -205,7 +206,7 @@ func (s *dbActorMgtService) Create(ctx context.Context, data models.DBActorMgt) 
 	}
 	logger.Debugf("Created agent command JSON payload (hex): %s", hexJSON)
 
-	_, err = executeSqlAgentAPI(ep.ClientID, ep.OsType, "execute", hexJSON, "", false)
+	_, err = agent.ExecuteSqlAgentAPI(ep.ClientID, ep.OsType, "execute", hexJSON, "", false)
 	if err != nil {
 		tx.Rollback()
 		return nil, fmt.Errorf("executeSqlAgentAPI error: %v", err)
@@ -475,7 +476,7 @@ func (s *dbActorMgtService) executeMySQLUpdate(cntMgt *models.CntMgt, finalSQL s
 	}
 	logger.Debugf("Created agent command JSON payload (hex): %s", hexJSON)
 
-	_, err = executeSqlAgentAPI(ep.ClientID, ep.OsType, "execute", hexJSON, "", false)
+	_, err = agent.ExecuteSqlAgentAPI(ep.ClientID, ep.OsType, "execute", hexJSON, "", false)
 	if err != nil {
 		return fmt.Errorf("executeSqlAgentAPI failed: %w", err)
 	}
@@ -522,7 +523,7 @@ func (s *dbActorMgtService) processOracleUpdate(tx interface{}, existing *models
 	}
 	logger.Debugf("Created agent command JSON payload (hex): %s", hexJSON)
 
-	_, err = executeSqlAgentAPI(ep.ClientID, ep.OsType, "execute", hexJSON, "", false)
+	_, err = agent.ExecuteSqlAgentAPI(ep.ClientID, ep.OsType, "execute", hexJSON, "", false)
 	if err != nil {
 		return fmt.Errorf("executeSqlAgentAPI failed: %w", err)
 	}
@@ -672,7 +673,7 @@ func (s *dbActorMgtService) Delete(ctx context.Context, id uint) error {
 	}
 	logger.Debugf("Created agent command JSON payload (hex): %s", hexJSON)
 
-	_, err = executeSqlAgentAPI(ep.ClientID, ep.OsType, "execute", hexJSON, "", false)
+	_, err = agent.ExecuteSqlAgentAPI(ep.ClientID, ep.OsType, "execute", hexJSON, "", false)
 	if err != nil {
 		tx.Rollback()
 		return fmt.Errorf("executeSqlAgentAPI error: %v", err)
@@ -737,7 +738,7 @@ func (s *dbActorMgtService) processMySQLCreateAll(tx *gorm.DB, cmt *models.CntMg
 	}
 	logger.Debugf("Created agent command JSON payload (hex): %s", hexJSON)
 
-	stdout, err := executeSqlAgentAPI(ep.ClientID, ep.OsType, "execute", hexJSON, "", true)
+	stdout, err := agent.ExecuteSqlAgentAPI(ep.ClientID, ep.OsType, "execute", hexJSON, "", true)
 	if err != nil {
 		return 0, 0, fmt.Errorf("executeSqlAgentAPI error: %v", err)
 	}
@@ -975,7 +976,7 @@ func (s *dbActorMgtService) executeOracleUserQuery(clientID, osType string, cdb 
 	}
 	logger.Debugf("Oracle user query hex payload: %s", hexJSON)
 
-	stdout, err := executeSqlAgentAPI(clientID, osType, "execute", hexJSON, "", true)
+	stdout, err := agent.ExecuteSqlAgentAPI(clientID, osType, "execute", hexJSON, "", true)
 	if err != nil {
 		return nil, fmt.Errorf("executeSqlAgentAPI error: %w", err)
 	}

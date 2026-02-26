@@ -10,6 +10,7 @@ import (
 	"dbfartifactapi/models"
 	"dbfartifactapi/pkg/logger"
 	"dbfartifactapi/repository"
+	"dbfartifactapi/services/agent"
 )
 
 // PolicyComplianceJobContext contains context data for policy compliance job completion
@@ -213,7 +214,7 @@ func retrievePolicyComplianceJobResults(jobID string, endpoint *models.Endpoint)
 	logger.Debugf("Retrieving policy compliance results for job %s from endpoint %s", jobID, endpoint.ClientID)
 
 	// Get results from agent using getresults command
-	resultsOutput, err := executeAgentAPISimpleCommand(endpoint.ClientID, endpoint.OsType, "getresults", jobID, "", true)
+	resultsOutput, err := agent.ExecuteAgentAPISimpleCommand(endpoint.ClientID, endpoint.OsType, "getresults", jobID, "", true)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get results for job %s: %w", jobID, err)
 	}
@@ -232,7 +233,7 @@ func retrievePolicyComplianceJobResults(jobID string, endpoint *models.Endpoint)
 		jobID, getResultsResp.Completed, getResultsResp.Failed, getResultsResp.FilePath)
 
 	// Download results file from agent
-	downloadInfo, err := downloadFileAgentAPI(endpoint.ClientID, getResultsResp.FilePath, endpoint.OsType)
+	downloadInfo, err := agent.DownloadFileAgentAPI(endpoint.ClientID, getResultsResp.FilePath, endpoint.OsType)
 	if err != nil {
 		return nil, fmt.Errorf("failed to download results file for job %s: %w", jobID, err)
 	}

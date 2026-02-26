@@ -11,6 +11,7 @@ import (
 	"dbfartifactapi/models"
 	"dbfartifactapi/pkg/logger"
 	"dbfartifactapi/repository"
+	"dbfartifactapi/services/agent"
 	"dbfartifactapi/utils"
 )
 
@@ -83,7 +84,7 @@ func (s *downloadService) ExecuteDownload(ctx context.Context, req models.Downlo
 	logger.Infof("Executing download: source=%s, save_path=%s, file_name=%s, compressed=%v",
 		req.SourcePath, req.SavePath, fileName, isCompressed)
 
-	stdout, err := executeSqlAgentAPI(ep.ClientID, ep.OsType, "filedownload", hexJSON, "--background", true)
+	stdout, err := agent.ExecuteSqlAgentAPI(ep.ClientID, ep.OsType, "filedownload", hexJSON, "--background", true)
 	if err != nil {
 		logger.Errorf("executeSqlAgentAPI error for filedownload: %v", err)
 		// Clean up archive if command failed

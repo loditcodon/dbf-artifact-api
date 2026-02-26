@@ -1,4 +1,4 @@
-package services
+package agent
 
 import (
 	"context"
@@ -36,11 +36,11 @@ type AgentAPIResponse struct {
 	Message     string `json:"message"`      // Additional message (e.g., error details)
 }
 
-// executeSqlAgentAPI executes SQL commands via dbfAgentAPI with retry mechanism.
+// ExecuteSqlAgentAPI executes SQL commands via dbfAgentAPI with retry mechanism.
 // Replaces executeSqlVeloArtifact for direct agent communication without Velociraptor artifacts.
 // Supports execute, download, policycompliance, and os_execute actions for dbfsqlexecute binary.
 // Option parameter is passed directly to the binary (e.g., "--background" for os_execute).
-func executeSqlAgentAPI(agentID, osType, action, hexEncodedJSON, option string, requiredStdout bool) (string, error) {
+func ExecuteSqlAgentAPI(agentID, osType, action, hexEncodedJSON, option string, requiredStdout bool) (string, error) {
 	maxRetries := config.Cfg.AgentMaxRetries
 
 	logger.Debugf("Starting dbfAgentAPI SQL execution - agentID: %s, osType: %s, action: %s, maxRetries: %d",
@@ -239,10 +239,10 @@ func isRetryableAgentError(err error) bool {
 	return true
 }
 
-// executeAgentAPISimpleCommand executes simple dbfsqlexecute commands that don't use hex-encoded JSON.
+// ExecuteAgentAPISimpleCommand executes simple dbfsqlexecute commands that don't use hex-encoded JSON.
 // Used for operations like checkstatus, getresults, listjobs, cleanup that pass plain values.
 // Command format: /etc/v2/dbf/bin/dbfsqlexecute <action> <value> [option]
-func executeAgentAPISimpleCommand(agentID, osType, action, value, option string, requiredStdout bool) (string, error) {
+func ExecuteAgentAPISimpleCommand(agentID, osType, action, value, option string, requiredStdout bool) (string, error) {
 	maxRetries := config.Cfg.AgentMaxRetries
 
 	logger.Debugf("Starting dbfAgentAPI simple command - agentID: %s, osType: %s, action: %s, value: %s",
@@ -354,10 +354,10 @@ func executeAgentAPIGetFile(agentID, remotePath, localPath string) error {
 	return nil
 }
 
-// downloadFileAgentAPI downloads a file from agent to local storage and returns metadata.
+// DownloadFileAgentAPI downloads a file from agent to local storage and returns metadata.
 // Similar to downloadFileVeloArtifact but uses dbfAgentAPI getfile command.
 // Files are downloaded to {VeloResultsDir}/{agentID}/ with MD5-based filename for compatibility.
-func downloadFileAgentAPI(agentID, remotePath, osType string) (*AgentDownloadResponse, error) {
+func DownloadFileAgentAPI(agentID, remotePath, osType string) (*AgentDownloadResponse, error) {
 	maxRetries := config.Cfg.AgentMaxRetries
 
 	// Convert Windows path backslashes to forward slashes
@@ -458,9 +458,9 @@ type ConnectionTestAgentParams struct {
 	ServiceName string `json:"service_name"`
 }
 
-// executeConnectionTestAgentAPI executes database connection test via dbfAgentAPI.
+// ExecuteConnectionTestAgentAPI executes database connection test via dbfAgentAPI.
 // Uses v2dbfsqldetector/sqldetector.exe on the remote agent.
-func executeConnectionTestAgentAPI(clientID string, params ConnectionTestAgentParams, osType string) (*AgentAPIResponse, error) {
+func ExecuteConnectionTestAgentAPI(clientID string, params ConnectionTestAgentParams, osType string) (*AgentAPIResponse, error) {
 	maxRetries := config.Cfg.AgentMaxRetries
 
 	logger.Debugf("Starting connection test via agent API - clientID: %s, osType: %s, type: %s, host: %s:%d",

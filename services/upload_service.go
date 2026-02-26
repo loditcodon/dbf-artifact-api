@@ -9,6 +9,7 @@ import (
 	"dbfartifactapi/models"
 	"dbfartifactapi/pkg/logger"
 	"dbfartifactapi/repository"
+	"dbfartifactapi/services/agent"
 	"dbfartifactapi/utils"
 )
 
@@ -82,7 +83,7 @@ func (s *uploadService) ExecuteUpload(ctx context.Context, req models.UploadRequ
 
 	logger.Infof("Executing upload for sourceJobId=%s, fileName=%s, filePath=%s", req.SourceJobID, req.FileName, req.FilePath)
 
-	stdout, err := executeSqlAgentAPI(ep.ClientID, ep.OsType, "upload", hexJSON, uploadOption, true)
+	stdout, err := agent.ExecuteSqlAgentAPI(ep.ClientID, ep.OsType, "upload", hexJSON, uploadOption, true)
 	if err != nil {
 		logger.Errorf("executeSqlAgentAPI error for upload: %v", err)
 		tx.Rollback()

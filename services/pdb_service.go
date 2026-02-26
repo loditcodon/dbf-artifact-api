@@ -10,6 +10,7 @@ import (
 	"dbfartifactapi/models"
 	"dbfartifactapi/pkg/logger"
 	"dbfartifactapi/repository"
+	"dbfartifactapi/services/agent"
 	"dbfartifactapi/services/dto"
 	"dbfartifactapi/utils"
 )
@@ -136,7 +137,7 @@ func (s *pdbService) GetAll(ctx context.Context, cntMgtID uint) (int, error) {
 	}
 	logger.Debugf("Created agent command JSON payload (hex): %s", hexJSON)
 
-	stdout, err := executeSqlAgentAPI(ep.ClientID, ep.OsType, "execute", hexJSON, "", true)
+	stdout, err := agent.ExecuteSqlAgentAPI(ep.ClientID, ep.OsType, "execute", hexJSON, "", true)
 	if err != nil {
 		tx.Rollback()
 		return 0, fmt.Errorf("executeSqlAgentAPI error: %w", err)
@@ -328,7 +329,7 @@ func (s *pdbService) Create(ctx context.Context, req PDBCreateRequest) (*models.
 	}
 	logger.Debugf("Created agent command JSON payload (hex): %s", hexJSON)
 
-	_, err = executeSqlAgentAPI(ep.ClientID, ep.OsType, "execute", hexJSON, "", false)
+	_, err = agent.ExecuteSqlAgentAPI(ep.ClientID, ep.OsType, "execute", hexJSON, "", false)
 	if err != nil {
 		tx.Rollback()
 		return nil, fmt.Errorf("failed to create PDB %s on remote server: %w", req.PDBName, err)
@@ -429,7 +430,7 @@ func (s *pdbService) Update(ctx context.Context, id uint, req PDBUpdateRequest) 
 	}
 	logger.Debugf("Created agent command JSON payload (hex): %s", hexJSON)
 
-	_, err = executeSqlAgentAPI(ep.ClientID, ep.OsType, "execute", hexJSON, "", false)
+	_, err = agent.ExecuteSqlAgentAPI(ep.ClientID, ep.OsType, "execute", hexJSON, "", false)
 	if err != nil {
 		tx.Rollback()
 		return fmt.Errorf("failed to alter PDB %s on remote server: %w", pdb.CntName, err)
@@ -514,7 +515,7 @@ func (s *pdbService) Delete(ctx context.Context, id uint, sqlParam string) error
 	}
 	logger.Debugf("Created agent command JSON payload (hex): %s", hexJSON)
 
-	_, err = executeSqlAgentAPI(ep.ClientID, ep.OsType, "execute", hexJSON, "", false)
+	_, err = agent.ExecuteSqlAgentAPI(ep.ClientID, ep.OsType, "execute", hexJSON, "", false)
 	if err != nil {
 		tx.Rollback()
 		return fmt.Errorf("failed to drop PDB %s on remote server: %w", pdb.CntName, err)

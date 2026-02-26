@@ -19,6 +19,7 @@ import (
 	"dbfartifactapi/models"
 	"dbfartifactapi/pkg/logger"
 	"dbfartifactapi/repository"
+	"dbfartifactapi/services/agent"
 	"dbfartifactapi/services/dto"
 	"dbfartifactapi/utils"
 )
@@ -643,7 +644,7 @@ func (s *PrivilegeSession) loadTable(tableName, query string, cmt *models.CntMgt
 		return fmt.Errorf("failed to create agent command JSON: %w", err)
 	}
 
-	stdout, err := executeSqlAgentAPI(ep.ClientID, ep.OsType, "execute", hexJSON, "", false)
+	stdout, err := agent.ExecuteSqlAgentAPI(ep.ClientID, ep.OsType, "execute", hexJSON, "", false)
 	if err != nil {
 		return fmt.Errorf("failed to execute query: %w", err)
 	}

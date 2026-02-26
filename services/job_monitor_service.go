@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"dbfartifactapi/pkg/logger"
+	"dbfartifactapi/services/agent"
 )
 
 // JobCompletionCallback is called when a job completes (success or failure)
@@ -285,7 +286,7 @@ func (jms *JobMonitorService) checkJobStatus(job *JobInfo) {
 		return
 	}
 
-	statusOutput, err := executeAgentAPISimpleCommand(job.ClientID, job.OsType, "checkstatus", job.JobID, "", true)
+	statusOutput, err := agent.ExecuteAgentAPISimpleCommand(job.ClientID, job.OsType, "checkstatus", job.JobID, "", true)
 	if err != nil {
 		logger.Errorf("Failed to check job status for %s: %v", job.JobID, err)
 		jms.updateJobError(job.JobID, fmt.Sprintf("Status check failed: %v", err))

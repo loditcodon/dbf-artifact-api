@@ -18,6 +18,7 @@ import (
 	"dbfartifactapi/models"
 	"dbfartifactapi/pkg/logger"
 	"dbfartifactapi/repository"
+	"dbfartifactapi/services/agent"
 	"dbfartifactapi/services/dto"
 	"dbfartifactapi/utils"
 
@@ -160,7 +161,7 @@ func (s *dbObjectMgtService) GetByDbMgtId(ctx context.Context, id uint) (string,
 	}
 
 	// Start background job with --background option
-	stdout, err := executeSqlAgentAPI(ep.ClientID, ep.OsType, "download", hexJSON, "--background", true)
+	stdout, err := agent.ExecuteSqlAgentAPI(ep.ClientID, ep.OsType, "download", hexJSON, "--background", true)
 	if err != nil {
 		tx.Rollback()
 		return "", fmt.Errorf("failed to start agent API job: %w", err)
@@ -515,7 +516,7 @@ func (s *dbObjectMgtService) GetByCntMgtIdOptimized(ctx context.Context, id uint
 	}
 
 	// Start background job with --background option
-	stdout, err := executeSqlAgentAPI(ep.ClientID, ep.OsType, "download", hexJSON, "--background", true)
+	stdout, err := agent.ExecuteSqlAgentAPI(ep.ClientID, ep.OsType, "download", hexJSON, "--background", true)
 	if err != nil {
 		tx.Rollback()
 		return "", fmt.Errorf("failed to start agent API job: %w", err)
@@ -709,7 +710,7 @@ func (s *dbObjectMgtService) Create(ctx context.Context, data models.DBObjectMgt
 	}
 	logger.Debugf("Created agent command JSON payload (hex): %s", hexJSON)
 
-	_, err = executeSqlAgentAPI(ep.ClientID, ep.OsType, "execute", hexJSON, "", false)
+	_, err = agent.ExecuteSqlAgentAPI(ep.ClientID, ep.OsType, "execute", hexJSON, "", false)
 	if err != nil {
 		tx.Rollback()
 		return nil, fmt.Errorf("failed to execute agent API command: %w", err)
@@ -832,7 +833,7 @@ func (s *dbObjectMgtService) Update(ctx context.Context, id uint, data models.DB
 	}
 	logger.Debugf("Created agent command JSON payload (hex): %s", hexJSON)
 
-	_, err = executeSqlAgentAPI(ep.ClientID, ep.OsType, "execute", hexJSON, "", false)
+	_, err = agent.ExecuteSqlAgentAPI(ep.ClientID, ep.OsType, "execute", hexJSON, "", false)
 	if err != nil {
 		tx.Rollback()
 		return nil, fmt.Errorf("failed to execute agent API command: %w", err)
@@ -959,7 +960,7 @@ func (s *dbObjectMgtService) Delete(ctx context.Context, id uint) error {
 		return fmt.Errorf("failed to create agent command JSON for object deletion: %w", err)
 	}
 
-	_, err = executeSqlAgentAPI(ep.ClientID, ep.OsType, "execute", hexJSON, "", false)
+	_, err = agent.ExecuteSqlAgentAPI(ep.ClientID, ep.OsType, "execute", hexJSON, "", false)
 	if err != nil {
 		tx.Rollback()
 		return fmt.Errorf("failed to execute agent API command: %w", err)

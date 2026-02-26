@@ -7,6 +7,7 @@ import (
 
 	"dbfartifactapi/pkg/logger"
 	"dbfartifactapi/repository"
+	"dbfartifactapi/services/agent"
 	"dbfartifactapi/utils"
 )
 
@@ -72,7 +73,7 @@ func (s *connectionTestService) TestConnection(ctx context.Context, id uint) (st
 	logger.Infof("Found endpoint: client_id=%s, os_type=%s", endpoint.ClientID, endpoint.OsType)
 
 	// Prepare connection test parameters
-	testParams := ConnectionTestAgentParams{
+	testParams := agent.ConnectionTestAgentParams{
 		Action:      "test_connection",
 		Type:        strings.ToLower(cntMgt.CntType),
 		Host:        cntMgt.IP,
@@ -83,7 +84,7 @@ func (s *connectionTestService) TestConnection(ctx context.Context, id uint) (st
 	}
 
 	// Execute connection test via agent API
-	agentResponse, err := executeConnectionTestAgentAPI(endpoint.ClientID, testParams, endpoint.OsType)
+	agentResponse, err := agent.ExecuteConnectionTestAgentAPI(endpoint.ClientID, testParams, endpoint.OsType)
 	if err != nil {
 		logger.Errorf("Connection test execution failed: %v", err)
 		return "", fmt.Errorf("failed to execute connection test: %v", err)

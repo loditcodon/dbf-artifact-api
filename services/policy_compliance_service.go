@@ -8,6 +8,7 @@ import (
 
 	"dbfartifactapi/pkg/logger"
 	"dbfartifactapi/repository"
+	"dbfartifactapi/services/agent"
 	"dbfartifactapi/services/dto"
 	"dbfartifactapi/utils"
 )
@@ -97,7 +98,7 @@ func (s *policyComplianceService) StartCheck(ctx context.Context, cntMgtID uint)
 	}
 
 	// Start background job with --background option
-	stdout, err := executeSqlAgentAPI(ep.ClientID, ep.OsType, "policycompliance", hexJSON, "--background", true)
+	stdout, err := agent.ExecuteSqlAgentAPI(ep.ClientID, ep.OsType, "policycompliance", hexJSON, "--background", true)
 	if err != nil {
 		tx.Rollback()
 		return "", fmt.Errorf("failed to start agent API job: %w", err)

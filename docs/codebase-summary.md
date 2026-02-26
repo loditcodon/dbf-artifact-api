@@ -20,7 +20,7 @@ dbfartifactapi_151/
 │   ├── job_status_controller.go   - GET /api/jobs/* monitoring
 │   └── swagger_*.go               - Swagger model definitions
 ├── services/ (17,464 LOC, 33 files) - Business logic + dbfAgentAPI orchestration
-│   ├── agent_api_service.go (563 LOC) - Core dbfAgentAPI integration
+│   ├── agent/agent_api_service.go (563 LOC) - Core dbfAgentAPI integration (sub-package)
 │   ├── job_monitor_service.go (634 LOC) - Job polling + completion callbacks
 │   ├── *_service.go              - Business logic for each entity
 │   ├── privilege_session*.go      - MySQL in-memory privilege discovery (2,752 LOC)
@@ -90,7 +90,7 @@ dbfartifactapi_151/
 - group_management_service.go (1,963 LOC) - Group/policy/actor assignments
 
 **Infrastructure Services:**
-- agent_api_service.go (563 LOC) - dbfAgentAPI orchestration
+- agent/agent_api_service.go (563 LOC) - dbfAgentAPI orchestration (sub-package)
 - job_monitor_service.go (634 LOC) - Job polling + callbacks
 - backup_service.go (466 LOC), download_service.go (196 LOC), upload_service.go (145 LOC)
 - session_service.go (129 LOC), connection_test_service.go (135 LOC)
@@ -167,7 +167,7 @@ MySQL Database
 
 ### 2. dbfAgentAPI Integration Flow
 1. Service builds hex-encoded JSON payload
-2. Call `agent_api_service.executeSqlAgentAPI()` with retry logic
+2. Call `agent.ExecuteSqlAgentAPI()` with retry logic
 3. For background jobs: return job_id
 4. Register with `job_monitor_service.RegisterJob()` + completion callback
 5. Job monitor polls `dbfsqlexecute checkstatus` every 10 seconds

@@ -12,6 +12,7 @@ import (
 	"dbfartifactapi/models"
 	"dbfartifactapi/pkg/logger"
 	"dbfartifactapi/repository"
+	"dbfartifactapi/services/agent"
 	"dbfartifactapi/utils"
 )
 
@@ -99,7 +100,7 @@ func retrieveObjectJobResults(jobID string, endpoint *models.Endpoint) ([]Object
 	logger.Debugf("Retrieving object results for job %s from endpoint %s", jobID, endpoint.ClientID)
 
 	// Get results from agent using getresults command
-	resultsOutput, err := executeAgentAPISimpleCommand(endpoint.ClientID, endpoint.OsType, "getresults", jobID, "", true)
+	resultsOutput, err := agent.ExecuteAgentAPISimpleCommand(endpoint.ClientID, endpoint.OsType, "getresults", jobID, "", true)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get results for job %s: %w", jobID, err)
 	}
@@ -118,7 +119,7 @@ func retrieveObjectJobResults(jobID string, endpoint *models.Endpoint) ([]Object
 		jobID, getResultsResp.Completed, getResultsResp.Failed, getResultsResp.FilePath)
 
 	// Download results file from agent
-	downloadInfo, err := downloadFileAgentAPI(endpoint.ClientID, getResultsResp.FilePath, endpoint.OsType)
+	downloadInfo, err := agent.DownloadFileAgentAPI(endpoint.ClientID, getResultsResp.FilePath, endpoint.OsType)
 	if err != nil {
 		return nil, fmt.Errorf("failed to download results file for job %s: %w", jobID, err)
 	}

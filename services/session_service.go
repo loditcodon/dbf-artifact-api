@@ -7,6 +7,7 @@ import (
 
 	"dbfartifactapi/pkg/logger"
 	"dbfartifactapi/repository"
+	"dbfartifactapi/services/agent"
 	"dbfartifactapi/services/dto"
 	"dbfartifactapi/utils"
 )
@@ -81,7 +82,7 @@ func (s *sessionService) KillSession(ctx context.Context, cntmgtID uint, session
 
 	// Execute agent API
 	osType := strings.ToLower(endpoint.OsType)
-	stdout, err := executeSqlAgentAPI(endpoint.ClientID, osType, "execute", hexJSON, "", false)
+	stdout, err := agent.ExecuteSqlAgentAPI(endpoint.ClientID, osType, "execute", hexJSON, "", false)
 	if err != nil {
 		logger.Errorf("Agent API execution failed: %v", err)
 		return "", fmt.Errorf("agent API execution failed: %w", err)
