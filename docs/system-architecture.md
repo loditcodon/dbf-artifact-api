@@ -1,7 +1,7 @@
 # DBF Artifact API - System Architecture
 
 **Version:** 1.0
-**Last Updated:** 2026-02-24
+**Last Updated:** 2026-02-26
 **Status:** Active Development
 
 ---
@@ -341,7 +341,7 @@ Background Job Submitted (job_id: "abc123")
 - `BulkUpdatePoliciesByActor(actor, policies)` - Bulk operations
 - `Update(policy)`, `Delete(id)` - Standard CRUD
 
-### Agent API Service
+### Agent API Service (`services/agent/`)
 
 **Responsibilities:**
 - Build hex-encoded JSON payloads
@@ -400,6 +400,19 @@ Background Job Submitted (job_id: "abc123")
 - Download discovered objects
 - Create DBObjectMgt records
 - Update database asset inventory
+
+**File Operations Completion Handlers** (`services/fileops/`):
+- Backup, download, upload completion handlers
+
+### Session & Connection Test Services (`services/session/`)
+
+**Session Service:**
+- Kill active database sessions via agent API
+
+**Connection Test Service:**
+- Test database connectivity via agent API
+- Parse connection test results
+- Update connection status in database
 
 ---
 
@@ -611,6 +624,6 @@ go test -cover ./...
 
 ---
 
-**Last Updated:** 2026-02-24
+**Last Updated:** 2026-02-26
 **Architecture Owner:** DBF Architecture Team
 **Next Review:** 2026-05-24

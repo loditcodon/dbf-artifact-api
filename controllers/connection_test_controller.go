@@ -5,20 +5,20 @@ import (
 	"strconv"
 
 	"dbfartifactapi/pkg/logger"
-	"dbfartifactapi/services"
+	"dbfartifactapi/services/session"
 
 	"github.com/gin-gonic/gin"
 )
 
 // ConnectionTestController handles database connection testing operations.
 type ConnectionTestController struct {
-	connectionTestService services.ConnectionTestService
+	connectionTestService session.ConnectionTestService
 }
 
 // NewConnectionTestController creates a new connection test controller instance.
 func NewConnectionTestController() *ConnectionTestController {
 	return &ConnectionTestController{
-		connectionTestService: services.NewConnectionTestService(),
+		connectionTestService: session.NewConnectionTestService(),
 	}
 }
 

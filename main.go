@@ -12,6 +12,8 @@ import (
 	_ "dbfartifactapi/docs"
 	"dbfartifactapi/pkg/logger"
 	"dbfartifactapi/services"
+	"dbfartifactapi/services/fileops"
+	"dbfartifactapi/services/session"
 	"dbfartifactapi/utils"
 
 	"github.com/gin-gonic/gin"
@@ -48,12 +50,12 @@ func main() {
 	controllers.SetDBMgtService(services.NewDBMgtService())
 	controllers.SetDBObjectMgtService(services.NewDBObjectMgtService())
 	controllers.SetDBPolicyService(services.NewDBPolicyService())
-	controllers.SetSessionService(services.NewSessionService())
+	controllers.SetSessionService(session.NewSessionService())
 	controllers.SetPolicyComplianceService(services.NewPolicyComplianceService())
 	controllers.SetGroupManagementService(services.NewGroupManagementService())
-	controllers.SetBackupService(services.NewBackupService())
-	controllers.SetUploadService(services.NewUploadService())
-	controllers.SetDownloadService(services.NewDownloadService())
+	controllers.SetBackupService(fileops.NewBackupService())
+	controllers.SetUploadService(fileops.NewUploadService())
+	controllers.SetDownloadService(fileops.NewDownloadService())
 	controllers.SetPDBService(services.NewPDBService())
 
 	// 3) Init structured logger with config

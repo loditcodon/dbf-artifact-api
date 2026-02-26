@@ -6,16 +6,16 @@ import (
 	"strconv"
 
 	"dbfartifactapi/pkg/logger"
-	"dbfartifactapi/services"
+	"dbfartifactapi/services/session"
 	"dbfartifactapi/utils"
 
 	"github.com/gin-gonic/gin"
 )
 
-var sessionSrv = services.NewSessionService()
+var sessionSrv = session.NewSessionService()
 
 // SetSessionService initializes the session service instance.
-func SetSessionService(srv services.SessionService) {
+func SetSessionService(srv session.SessionService) {
 	sessionSrv = srv
 }
 

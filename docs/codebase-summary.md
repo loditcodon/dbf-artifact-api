@@ -21,6 +21,8 @@ dbfartifactapi_151/
 │   └── swagger_*.go               - Swagger model definitions
 ├── services/ (17,464 LOC, 33 files) - Business logic + dbfAgentAPI orchestration
 │   ├── agent/agent_api_service.go (563 LOC) - Core dbfAgentAPI integration (sub-package)
+│   ├── fileops/ (sub-package)       - Backup, download, upload services + completion handlers
+│   ├── session/ (sub-package)       - Session kill + connection test services
 │   ├── job_monitor_service.go (634 LOC) - Job polling + completion callbacks
 │   ├── *_service.go              - Business logic for each entity
 │   ├── privilege_session*.go      - MySQL in-memory privilege discovery (2,752 LOC)
@@ -92,8 +94,8 @@ dbfartifactapi_151/
 **Infrastructure Services:**
 - agent/agent_api_service.go (563 LOC) - dbfAgentAPI orchestration (sub-package)
 - job_monitor_service.go (634 LOC) - Job polling + callbacks
-- backup_service.go (466 LOC), download_service.go (196 LOC), upload_service.go (145 LOC)
-- session_service.go (129 LOC), connection_test_service.go (135 LOC)
+- fileops/backup_service.go (466 LOC), fileops/download_service.go (196 LOC), fileops/upload_service.go (145 LOC) - (sub-package)
+- session/session_service.go (129 LOC), session/connection_test_service.go (144 LOC) - (sub-package)
 - policy_compliance_service.go (139 LOC), pdb_service.go (533 LOC)
 
 **Privilege Discovery (MySQL):**
@@ -110,13 +112,10 @@ dbfartifactapi_151/
 - policy_completion_handler.go (966 LOC)
 - bulk_policy_completion_handler.go (298 LOC)
 - object_completion_handler.go (824 LOC)
-- backup_completion_handler.go (347 LOC)
-- download_completion_handler.go (76 LOC)
-- upload_completion_handler.go (133 LOC)
+- backup_completion_handler.go (347 LOC) - (in fileops/)
+- download_completion_handler.go (76 LOC) - (in fileops/)
+- upload_completion_handler.go (133 LOC) - (in fileops/)
 - policy_compliance_completion_handler.go (321 LOC)
-
-**Legacy Services:**
-- veloartifact_service.go (510 LOC) - VeloArtifact integration (being replaced)
 
 ### Models (390 LOC, 18 files)
 
@@ -241,10 +240,13 @@ jobMonitor.RegisterJob(jobID, &JobInfo{
 ### Internal Dependencies
 ```
 Controllers → Services → Repository → Models → GORM
-            ↘ utils (validation, logger, conversion)
-            ↘ pkg/logger (structured logging)
-            ↘ config (DB connection, env vars)
-            ↘ bootstrap (startup data loading)
+           ↘ Services/agent (dbfAgentAPI)
+           ↘ Services/fileops (backup/download/upload)
+           ↘ Services/session (session/connection-test)
+           ↘ utils (validation, logger, conversion)
+           ↘ pkg/logger (structured logging)
+           ↘ config (DB connection, env vars)
+           ↘ bootstrap (startup data loading)
 ```
 
 ## Configuration (30+ env vars)
@@ -313,5 +315,5 @@ endpoints ←─── CntMgt.Agent (FK)
 
 ---
 
-**Last Updated:** 2026-02-24
+**Last Updated:** 2026-02-26
 **Maintainer:** DBF Architecture Team

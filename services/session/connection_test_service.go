@@ -1,7 +1,8 @@
-package services
+package session
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -11,16 +12,8 @@ import (
 	"dbfartifactapi/utils"
 )
 
-// ConnectionTestResponse represents the response from VeloArtifact command
-type ConnectionTestResponse struct {
-	Complete   bool   `json:"Complete"`
-	ReturnCode int    `json:"ReturnCode"`
-	Stderr     string `json:"Stderr"`
-	Stdout     string `json:"Stdout"`
-}
-
-// ConnectionStatus represents the parsed connection status from stdout
-type ConnectionStatus struct {
+// ConnectionTestResult represents the result from v2dbfsqldetector
+type ConnectionTestResult struct {
 	Name     string `json:"name"`
 	Status   string `json:"status"`
 	Response string `json:"response"`
@@ -98,7 +91,7 @@ func (s *connectionTestService) TestConnection(ctx context.Context, id uint) (st
 	var resultMessage string
 
 	if agentResponse.Status == "success" && agentResponse.ExitCode == 0 && agentResponse.Output != "" {
-		// Parse output using helper function from veloartifact_service
+		// Parse output to extract connection test results
 		connectionResults, err := parseConnectionTestResult(agentResponse.Output)
 		if err == nil && len(connectionResults) > 0 {
 			if connectionResults[0].Status == "running" &&
@@ -133,4 +126,19 @@ func (s *connectionTestService) TestConnection(ctx context.Context, id uint) (st
 
 	logger.Infof("Updated connection status for id=%d to %s", id, connectionStatus)
 	return resultMessage, nil
+}
+
+// parseConnectionTestResult parses the stdout from connection test to extract results
+func parseConnectionTestResult(stdout string) ([]ConnectionTestResult, error) {
+	if strings.TrimSpace(stdout) == "" {
+		return nil, fmt.Errorf("connection test returned empty output")
+	}
+
+	var results []ConnectionTestResult
+	if err := json.Unmarshal([]byte(stdout), &results); err != nil {
+		logger.Debugf("Failed to parse connection test results as JSON: %v", err)
+		return nil, fmt.Errorf("failed to parse connection test results: %v", err)
+	}
+
+	return results, nil
 }
