@@ -12,6 +12,7 @@ import (
 	_ "dbfartifactapi/docs"
 	"dbfartifactapi/pkg/logger"
 	"dbfartifactapi/services"
+	"dbfartifactapi/services/entity"
 	"dbfartifactapi/services/fileops"
 	"dbfartifactapi/services/job"
 	"dbfartifactapi/services/session"
@@ -47,9 +48,9 @@ func main() {
 		log.Fatalf("Load data error: %v", err)
 	}
 
-	controllers.SetDBActorMgtService(services.NewDBActorMgtService())
-	controllers.SetDBMgtService(services.NewDBMgtService())
-	controllers.SetDBObjectMgtService(services.NewDBObjectMgtService())
+	controllers.SetDBActorMgtService(entity.NewDBActorMgtService())
+	controllers.SetDBMgtService(entity.NewDBMgtService())
+	controllers.SetDBObjectMgtService(entity.NewDBObjectMgtService())
 	controllers.SetDBPolicyService(services.NewDBPolicyService())
 	controllers.SetSessionService(session.NewSessionService())
 	controllers.SetPolicyComplianceService(services.NewPolicyComplianceService())

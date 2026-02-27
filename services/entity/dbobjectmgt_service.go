@@ -1,4 +1,4 @@
-package services
+package entity
 
 import (
 	"bytes"
@@ -26,20 +26,20 @@ import (
 	"gorm.io/gorm"
 )
 
-// objectInput represents processed object template data similar to policyInput
-type objectInput struct {
-	dbobject models.DBObject
-	objectId int
-	finalSQL string // Store the processed SQL to avoid re-processing
+// ObjectInput represents processed object template data similar to policyInput
+type ObjectInput struct {
+	Dbobject models.DBObject
+	ObjectId int
+	FinalSQL string // Store the processed SQL to avoid re-processing
 }
 
 // CombinedObjectJobContext contains context data for combined object job completion
 type CombinedObjectJobContext struct {
-	CntMgtID   uint                            `json:"cnt_mgt_id"`
-	DbMgts     []models.DBMgt                  `json:"db_mgts"`
-	CMT        *models.CntMgt                  `json:"cmt"`
-	EndpointID uint                            `json:"endpoint_id"`
-	DbQueries  map[uint]map[string]objectInput `json:"db_queries"` // dbmgt_id -> queries
+	CntMgtID   uint                           `json:"cnt_mgt_id"`
+	DbMgts     []models.DBMgt                 `json:"db_mgts"`
+	CMT        *models.CntMgt                 `json:"cmt"`
+	EndpointID uint                           `json:"endpoint_id"`
+	DbQueries  map[uint]map[string]ObjectInput `json:"db_queries"` // dbmgt_id -> queries
 }
 
 // DBObjectMgtService provides business logic for database object management operations.
@@ -215,8 +215,8 @@ func (s *dbObjectMgtService) GetByDbMgtId(ctx context.Context, id uint) (string,
 
 // buildObjectQueries builds SQL queries with unique keys to prevent collision.
 // Uses ObjectType:ID pattern for simple objects, ObjectType:ID_DependentIndex:N for dependent objects.
-func (s *dbObjectMgtService) buildObjectQueries(tx *gorm.DB, dbmgtID uint, dbmgt *models.DBMgt, cmt *models.CntMgt) (map[string]objectInput, error) {
-	sqlFinalMap := make(map[string]objectInput)
+func (s *dbObjectMgtService) buildObjectQueries(tx *gorm.DB, dbmgtID uint, dbmgt *models.DBMgt, cmt *models.CntMgt) (map[string]ObjectInput, error) {
+	sqlFinalMap := make(map[string]ObjectInput)
 
 	// Database-type-specific ObjectId exclusions
 	var exceptMap map[uint]struct{}
@@ -320,20 +320,20 @@ func (s *dbObjectMgtService) buildObjectQueries(tx *gorm.DB, dbmgtID uint, dbmgt
 				objectSQL := strings.ReplaceAll(finalSQL, "${dbobjectmgt.objectname_byinputtype}", dbObjectMgt.ObjectName)
 				// Use unique key to prevent collision: "ObjectType:ID_DependentIndex:N"
 				uniqueKey := fmt.Sprintf("ObjectType:%d_DependentIndex:%d", dbObject.ID, i+1)
-				sqlFinalMap[uniqueKey] = objectInput{
-					dbobject: dbObject,
-					objectId: utils.MustUintToInt(dbObject.ID),
-					finalSQL: objectSQL, // Store processed SQL
+				sqlFinalMap[uniqueKey] = ObjectInput{
+					Dbobject: dbObject,
+					ObjectId: utils.MustUintToInt(dbObject.ID),
+					FinalSQL: objectSQL, // Store processed SQL
 				}
 				logger.Debugf("Added SQL for objecttype=%d with table=%s, key=%s", dbObject.ID, dbObjectMgt.ObjectName, uniqueKey)
 			}
 		} else {
 			// Simple objects without dependencies - use ObjectType:ID as unique key
 			uniqueKey := fmt.Sprintf("ObjectType:%d", dbObject.ID)
-			sqlFinalMap[uniqueKey] = objectInput{
-				dbobject: dbObject,
-				objectId: utils.MustUintToInt(dbObject.ID),
-				finalSQL: finalSQL, // Store processed SQL
+			sqlFinalMap[uniqueKey] = ObjectInput{
+				Dbobject: dbObject,
+				ObjectId: utils.MustUintToInt(dbObject.ID),
+				FinalSQL: finalSQL, // Store processed SQL
 			}
 			logger.Debugf("Added simple SQL for objecttype=%d, key=%s", dbObject.ID, uniqueKey)
 		}
@@ -344,15 +344,15 @@ func (s *dbObjectMgtService) buildObjectQueries(tx *gorm.DB, dbmgtID uint, dbmgt
 }
 
 // buildObjectQueryGroups creates individual keys for each query for easier result parsing
-func (s *dbObjectMgtService) buildObjectQueryGroups(sqlFinalMap map[string]objectInput) map[string][]string {
+func (s *dbObjectMgtService) buildObjectQueryGroups(sqlFinalMap map[string]ObjectInput) map[string][]string {
 	// Use the unique keys from sqlFinalMap directly to prevent SQL collision
 	// This ensures each object type gets its own key even if SQL is identical
 	listQuery := make(map[string][]string)
 
 	for uniqueKey, objectData := range sqlFinalMap {
-		// Use the pre-processed finalSQL from objectInput
-		listQuery[uniqueKey] = []string{objectData.finalSQL} // Use unique key to prevent collision
-		logger.Debugf("Added query with unique key: %s, SQL: %s", uniqueKey, objectData.finalSQL)
+		// Use the pre-processed finalSQL from ObjectInput
+		listQuery[uniqueKey] = []string{objectData.FinalSQL} // Use unique key to prevent collision
+		logger.Debugf("Added query with unique key: %s, SQL: %s", uniqueKey, objectData.FinalSQL)
 	}
 
 	return listQuery
@@ -438,13 +438,13 @@ func (s *dbObjectMgtService) GetByCntMgtIdOptimized(ctx context.Context, id uint
 	logger.Infof("Found endpoint id=%d, client_id=%s, os_type=%s", ep.ID, ep.ClientID, ep.OsType)
 
 	// Build combined queries for all databases under this connection
-	combinedSqlFinalMap := make(map[string]objectInput)
+	combinedSqlFinalMap := make(map[string]ObjectInput)
 	combinedContext := &CombinedObjectJobContext{
 		CntMgtID:   id,
 		DbMgts:     dbmgts,
 		CMT:        cmt,
 		EndpointID: ep.ID,
-		DbQueries:  make(map[uint]map[string]objectInput), // dbmgt_id -> queries
+		DbQueries:  make(map[uint]map[string]ObjectInput), // dbmgt_id -> queries
 	}
 
 	for _, dbmgt := range dbmgts {
@@ -584,9 +584,9 @@ func (s *dbObjectMgtService) GetByCntMgtIdOptimized(ctx context.Context, id uint
 		jobResp.JobID, len(dbmgts)), nil
 }
 
-// mergeOutput merges duplicate object type counts from multiple query results.
+// MergeOutput merges duplicate object type counts from multiple query results.
 // Used to consolidate object counts when same object type appears in multiple queries.
-func mergeOutput(output string) (string, error) {
+func MergeOutput(output string) (string, error) {
 	countMap := make(map[string]int)
 	regx := regexp.MustCompile(`Object (.+?) has (\d+) records`)
 
@@ -981,7 +981,7 @@ func (s *dbObjectMgtService) Delete(ctx context.Context, id uint) error {
 
 // buildCombinedObjectQueryGroups creates individual keys for combined queries.
 // Formats keys as "DB:dbmgt_id_ObjectType:object_id" for unique identification.
-func (s *dbObjectMgtService) buildCombinedObjectQueryGroups(combinedSqlFinalMap map[string]objectInput) map[string][]string {
+func (s *dbObjectMgtService) buildCombinedObjectQueryGroups(combinedSqlFinalMap map[string]ObjectInput) map[string][]string {
 	listQuery := make(map[string][]string)
 
 	// Use prefixed keys directly since they're already unique
@@ -1005,9 +1005,9 @@ func (s *dbObjectMgtService) buildCombinedObjectQueryGroups(combinedSqlFinalMap 
 		// Format: "DB:dbmgt_id_ObjectType:object_id_*" for unique identification across databases
 		finalKey := fmt.Sprintf("DB:%d_%s", dbMgtID, originalKey)
 
-		// Use the pre-processed finalSQL from objectInput
-		listQuery[finalKey] = []string{objectData.finalSQL} // Each key has exactly 1 query
-		// logger.Debugf("Added combined query with key: %s, SQL: %s", finalKey, objectData.finalSQL)
+		// Use the pre-processed finalSQL from ObjectInput
+		listQuery[finalKey] = []string{objectData.FinalSQL} // Each key has exactly 1 query
+		// logger.Debugf("Added combined query with key: %s, SQL: %s", finalKey, objectData.FinalSQL)
 	}
 
 	return listQuery

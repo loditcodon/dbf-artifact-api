@@ -9,7 +9,7 @@ import (
 	"dbfartifactapi/models"
 	"dbfartifactapi/pkg/logger"
 	"dbfartifactapi/repository"
-	"dbfartifactapi/services"
+	"dbfartifactapi/services/entity"
 	"dbfartifactapi/services/dto"
 	"dbfartifactapi/utils"
 
@@ -17,10 +17,10 @@ import (
 )
 
 // dbActorMgtSrv is the global database actor management service instance.
-var dbActorMgtSrv = services.NewDBActorMgtService()
+var dbActorMgtSrv = entity.NewDBActorMgtService()
 
 // SetDBActorMgtService initializes the database actor management service instance.
-func SetDBActorMgtService(s services.DBActorMgtService) {
+func SetDBActorMgtService(s entity.DBActorMgtService) {
 	dbActorMgtSrv = s
 }
 

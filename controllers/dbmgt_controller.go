@@ -7,17 +7,17 @@ import (
 
 	"dbfartifactapi/models"
 	"dbfartifactapi/pkg/logger"
-	"dbfartifactapi/services"
+	"dbfartifactapi/services/entity"
 	"dbfartifactapi/utils"
 
 	"github.com/gin-gonic/gin"
 )
 
-var dbMgtSrv = services.NewDBMgtService()
+var dbMgtSrv = entity.NewDBMgtService()
 
 // SetDBMgtService initializes the database management service instance.
 // Used for dependency injection in tests to provide mock implementations.
-func SetDBMgtService(s services.DBMgtService) {
+func SetDBMgtService(s entity.DBMgtService) {
 	dbMgtSrv = s
 }
 

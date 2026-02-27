@@ -1,4 +1,4 @@
-package services
+package entity
 
 import (
 	"encoding/json"
@@ -34,6 +34,17 @@ type ObjectResult struct {
 	Result      [][]interface{} `json:"result"`
 	ExecuteTime string          `json:"execute_time"`
 	DurationMs  int             `json:"duration_ms"`
+}
+
+// objectGetResultsResponse represents the response from getresults command.
+// Mirrors services.GetResultsResponse to avoid circular dependency.
+type objectGetResultsResponse struct {
+	Completed    int    `json:"completed"`
+	Failed       int    `json:"failed"`
+	FilePath     string `json:"file_path"`
+	Message      string `json:"message"`
+	Success      bool   `json:"success"`
+	TotalQueries int    `json:"total_queries"`
 }
 
 // CreateObjectCompletionHandler creates a callback function for object job completion
@@ -107,7 +118,7 @@ func retrieveObjectJobResults(jobID string, endpoint *models.Endpoint) ([]Object
 	}
 
 	// Parse getresults response
-	var getResultsResp GetResultsResponse
+	var getResultsResp objectGetResultsResponse
 	if err := json.Unmarshal([]byte(resultsOutput), &getResultsResp); err != nil {
 		return nil, fmt.Errorf("failed to parse getresults response for job %s: %w", jobID, err)
 	}

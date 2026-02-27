@@ -7,16 +7,16 @@ import (
 
 	"dbfartifactapi/models"
 	"dbfartifactapi/pkg/logger"
-	"dbfartifactapi/services"
+	"dbfartifactapi/services/entity"
 	"dbfartifactapi/utils"
 
 	"github.com/gin-gonic/gin"
 )
 
-var dbObjectMgtSrv = services.NewDBObjectMgtService()
+var dbObjectMgtSrv = entity.NewDBObjectMgtService()
 
 // SetDBObjectMgtService initializes the database object management service instance.
-func SetDBObjectMgtService(srv services.DBObjectMgtService) {
+func SetDBObjectMgtService(srv entity.DBObjectMgtService) {
 	dbObjectMgtSrv = srv
 }
 
