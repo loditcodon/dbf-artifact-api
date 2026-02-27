@@ -71,26 +71,35 @@ The DBF Artifact API is a layered, service-oriented system for managing database
 ┌─────────────────────────────────────────────────────────────────┐
 │ Service Layer (33 services)                                     │
 ├─────────────────────────────────────────────────────────────────┤
-│ Policy Services           Job Management (`services/job/`)  │
-│ ├─ DBPolicy              ├─ JobMonitor                │
-│ └─ Group Management      ├─ PolicyCompletion          │
-│                          ├─ BulkCompletion            │
-│ Entity Mgt (`services/entity/`)  └─ Other Handlers    │
+│ Policy Services (`services/policy/`)                            │
+│ ├─ DBPolicy                                           │
+│ ├─ PolicyCompletionHandler                            │
+│ └─ BulkCompletionHandler                              │
+│                                                       │
+│ PDB Services (`services/pdb/`)                                  │
+│ └─ PDB Management                                     │
+│                                                       │
+│ Entity Mgt (`services/entity/`)                                 │
 │ ├─ DBMgt                                              │
 │ ├─ DBActorMgt                                         │
 │ ├─ DBObjectMgt                                        │
 │ └─ ObjectCompletionHandler                            │
 │                                                       │
+│ Job Management (`services/job/`)                                │
+│ ├─ JobMonitor                                         │
+│ ├─ PolicyCompletion                                   │
+│ └─ BulkCompletion                                     │
+│                                                       │
 │ Privilege Discovery (`services/privilege/`)            │
 │ ├─ privilege/ (shared types, registry, session)        │
 │ ├─ privilege/mysql/ (MySQL handler+session)            │
-│ ├─ privilege/oracle/ (Oracle handler+session+queries)  │
-│ └─ Oracle/MySQL wrapper delegates in services/         │
+│ └─ privilege/oracle/ (Oracle handler+session+queries)  │
 │                                                       │
 │ Infrastructure                                        │
-│ ├─ AgentAPI               │
-│ ├─ Backup/Upload/Download│
-│ └─ Connection Testing    │
+│ ├─ Agent API                                          │
+│ ├─ Backup/Upload/Download                            │
+│ ├─ Session Management                                 │
+│ └─ Connection Testing                                 │
 └─────────────────────────────────────────────────────────────────┘
                               ↓
 ┌─────────────────────────────────────────────────────────────────┐
@@ -336,19 +345,41 @@ Background Job Submitted (job_id: "abc123")
 
 ## Service Architecture
 
-### DBPolicy Service (Core)
+### Policy Service (`services/policy/`, Phase 8)
 
 **Responsibilities:**
 - Create, update, delete policies
 - Privilege discovery (MySQL/Oracle)
 - Bulk policy operations
 - Group assignment automation
+- Hex-encoded policy template queries
+
+**Key Files:**
+- `policy/dbpolicy_service.go` - Core policy CRUD + GetByCntMgt (privilege discovery)
+- `policy/policy_completion_handler.go` - Download policy results + create records
+- `policy/bulk_policy_completion_handler.go` - Bulk update completion
+- `policy/oracle_privilege_queries.go` - Oracle privilege query builders
+- `policy/init.go` - Registry registration (breaks circular dependency with privilege)
 
 **Key Methods:**
 - `GetByCntMgt(cntID)` - Discover privileges for connection (most complex)
 - `Create(policy)` - Create single policy
 - `BulkUpdatePoliciesByActor(actor, policies)` - Bulk operations
 - `Update(policy)`, `Delete(id)` - Standard CRUD
+
+**Dependency:** Imports `services/privilege` (one-way). Uses registry pattern in `init.go` to register implementations without circular import.
+
+### PDB Service (`services/pdb/`, Phase 8)
+
+**Responsibilities:**
+- Oracle Pluggable Database (PDB) management
+- PDB creation and configuration
+- PDB status monitoring
+
+**Key Files:**
+- `pdb/pdb_service.go` - PDB CRUD operations
+
+**Dependency:** Self-contained, imports only `services/agent` and `services/dto`.
 
 ### Agent API Service (`services/agent/`)
 
@@ -382,16 +413,17 @@ Background Job Submitted (job_id: "abc123")
 
 **Shared Package (`services/privilege/`):**
 - `types.go` — Shared types: `PrivilegeSessionJobContext`, `QueryResult`, `PolicyEvaluator` interface, registry function types
-- `registry.go` — Registry pattern to break circular dependency between `services/` and `privilege/mysql/`. Functions registered via `init()` in `services/dbpolicy_service.go`
+- `registry.go` — Registry pattern to break circular dependency between `services/privilege` and `services/policy`. Functions registered via `init()` in `services/policy/init.go`
 - `session.go` — `PrivilegeSession` struct (in-memory go-mysql-server), `GetFreePort()`, `ExecuteInDatabase()`, `ExecuteTemplate()`
 
-**Dependency Graph:**
+**Dependency Graph (Phase 8):**
 ```
 services/privilege        (no imports of services/ or privilege/mysql/ or privilege/oracle/)
 services/privilege/mysql  (imports privilege, NOT services/)
 services/privilege/oracle (imports privilege, NOT services/)
+services/policy           (imports privilege, registers implementations)
 services/entity           (imports agent, dto, job, repository; NOT services/)
-services/                 (imports privilege, privilege/mysql, privilege/oracle, entity, registers via init())
+services/                 (other services import privilege, privilege/mysql, privilege/oracle)
 ```
 
 **MySQL Privilege Session (`services/privilege/mysql/`):**
@@ -404,10 +436,6 @@ services/                 (imports privilege, privilege/mysql, privilege/oracle,
 - `privilege_session.go` — `NewOraclePrivilegeSession()`, in-memory go-mysql-server with Oracle privilege tables, `ReplaceOracleDollarViews()`
 - `handler.go` — `CreateOraclePrivilegeSessionCompletionHandler()`, three-pass Oracle policy engine
 - `queries.go` — `BuildOraclePrivilegeDataQueries()`, `BuildOracleObjectQueries()`, column mappings
-
-**Thin wrappers in `services/` (backward compatibility):**
-- `oracle_connection_helper.go` — Type aliases and delegation wrappers for Oracle connection types
-- `oracle_privilege_queries.go` — `dbPolicyService` methods that delegate to `oracle.*`
 
 ### Entity Management Services (`services/entity/`)
 
@@ -431,13 +459,13 @@ services/                 (imports privilege, privilege/mysql, privilege/oracle,
 
 ### Completion Handlers
 
-**Policy Completion Handler:**
+**Policy Completion Handler** (`services/policy/`)
 - Download policy results from agent
 - Parse policy records
 - Create DBPolicy entries
 - Assign to groups
 
-**Bulk Completion Handler:**
+**Bulk Completion Handler** (`services/policy/`)
 - Process bulk update results
 - Atomic consistency check
 - Update multiple policies
@@ -667,4 +695,4 @@ go test -cover ./...
 
 **Last Updated:** 2026-02-27
 **Architecture Owner:** DBF Architecture Team
-**Next Review:** 2026-05-24
+**Next Review:** 2026-05-27

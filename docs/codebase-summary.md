@@ -22,14 +22,17 @@ dbfartifactapi_151/
 ├── services/ (17,464 LOC, 33 files) - Business logic + dbfAgentAPI orchestration
 │   ├── agent/agent_api_service.go (563 LOC) - Core dbfAgentAPI integration (sub-package)
 │   ├── entity/ (sub-package)        - DBMgt, DBActorMgt, DBObjectMgt CRUD + object completion handler
-│   ├── fileops/ (sub-package)       - Backup, download, upload services + completion handlers
-│   ├── session/ (sub-package)       - Session kill + connection test services
-│   ├── job/ (sub-package)           - Job monitor service + job types
+│   ├── policy/ (sub-package)         - DBPolicy CRUD + privilege discovery + completion handlers (Phase 8)
+│   ├── pdb/ (sub-package)            - PDB management services (Phase 8)
+│   ├── fileops/ (sub-package)        - Backup, download, upload services + completion handlers
+│   ├── session/ (sub-package)        - Session kill + connection test services
+│   ├── job/ (sub-package)            - Job monitor service + job types
 │   ├── privilege/ (sub-package)      - Shared privilege types, registry, session base
 │   │   ├── mysql/ (sub-package)     - MySQL in-memory privilege discovery
 │   │   └── oracle/ (sub-package)    - Oracle in-memory privilege discovery
-│   ├── *_service.go              - Business logic for remaining entities
-│   └── *_completion_handler.go   - Background job result callbacks
+│   ├── group_management_service.go - Group/policy/actor assignments
+│   ├── policy_compliance_service.go - Compliance check orchestration
+│   └── *_completion_handler.go     - Background job result callbacks
 ├── models/ (390 LOC, 18 files) - GORM domain entities
 │   ├── cntmgt_model.go           - Connection management (MySQL/Oracle/PG/MSSQL)
 │   ├── dbmgt_model.go            - Database instances
@@ -87,8 +90,18 @@ dbfartifactapi_151/
 ### Services (17,464 LOC, 33 files)
 
 **Core Services:**
-- dbpolicy_service.go (1,340 LOC) - GetByCntMgt, Create, Update, Delete, Bulk operations
 - group_management_service.go (1,963 LOC) - Group/policy/actor assignments
+- policy_compliance_service.go (139 LOC) - Compliance check orchestration
+
+**Policy Services (`services/policy/`, Phase 8):**
+- policy/dbpolicy_service.go (1,340 LOC) - GetByCntMgt, Create, Update, Delete, Bulk operations
+- policy/policy_completion_handler.go (966 LOC) - Policy job completion callbacks
+- policy/bulk_policy_completion_handler.go (298 LOC) - Bulk policy completion
+- policy/oracle_privilege_queries.go - Oracle privilege query builders
+- policy/init.go - Registry registration (breaks circular dependency)
+
+**PDB Services (`services/pdb/`, Phase 8):**
+- pdb/pdb_service.go (533 LOC) - PDB management CRUD
 
 **Entity Services (`services/entity/`):**
 - entity/dbmgt_service.go (409 LOC) - Database management CRUD
@@ -101,7 +114,7 @@ dbfartifactapi_151/
 - job/job_monitor_service.go (634 LOC) - Job polling + callbacks (sub-package)
 - fileops/backup_service.go (466 LOC), fileops/download_service.go (196 LOC), fileops/upload_service.go (145 LOC) - (sub-package)
 - session/session_service.go (129 LOC), session/connection_test_service.go (144 LOC) - (sub-package)
-- policy_compliance_service.go (139 LOC), pdb_service.go (533 LOC)
+- policy_compliance_completion_handler.go (321 LOC)
 
 **Privilege Discovery — Shared (`services/privilege/`):**
 - privilege/types.go (~60 LOC) - Shared types: PrivilegeSessionJobContext, QueryResult, PolicyEvaluator interface, registry func types
@@ -119,8 +132,8 @@ dbfartifactapi_151/
 - privilege/oracle/connection_helper.go (~74 LOC) - CDB/PDB detection
 
 **Job Completion Handlers:**
-- policy_completion_handler.go (966 LOC)
-- bulk_policy_completion_handler.go (298 LOC)
+- policy/policy_completion_handler.go (966 LOC) - (in policy/)
+- policy/bulk_policy_completion_handler.go (298 LOC) - (in policy/)
 - entity/object_completion_handler.go (824 LOC) - (in entity/)
 - fileops/backup_completion_handler.go (347 LOC) - (in fileops/)
 - fileops/download_completion_handler.go (76 LOC) - (in fileops/)
@@ -252,6 +265,8 @@ jobMonitor.RegisterJob(jobID, &JobInfo{
 Controllers → Services → Repository → Models → GORM
            ↘ Services/agent (dbfAgentAPI)
            ↘ Services/entity (DBMgt, DBActorMgt, DBObjectMgt CRUD)
+           ↘ Services/policy (Policy CRUD + privilege discovery)
+           ↘ Services/pdb (PDB management)
            ↘ Services/fileops (backup/download/upload)
            ↘ Services/session (session/connection-test)
            ↘ Services/job (job monitoring)
