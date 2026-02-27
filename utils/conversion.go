@@ -3,6 +3,7 @@ package utils
 import (
 	"fmt"
 	"math"
+	"strings"
 )
 
 // SafeIntToUint safely converts int to uint with validation.
@@ -50,4 +51,10 @@ func IntToUintOrZero(val int) uint {
 		return 0
 	}
 	return uint(val)
+}
+
+// EscapeSQL escapes single quotes in SQL strings to prevent injection.
+// Used by privilege session code for building INSERT statements into in-memory MySQL server.
+func EscapeSQL(s string) string {
+	return strings.ReplaceAll(s, "'", "''")
 }

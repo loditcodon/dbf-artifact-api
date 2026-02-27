@@ -19,6 +19,8 @@ import (
 	"dbfartifactapi/services/agent"
 	"dbfartifactapi/services/dto"
 	"dbfartifactapi/services/job"
+	"dbfartifactapi/services/privilege"
+	privmysql "dbfartifactapi/services/privilege/mysql"
 
 	"dbfartifactapi/utils"
 
@@ -72,6 +74,33 @@ type dbPolicyService struct {
 	dbObjectMgtRepo        repository.DBObjectMgtRepository
 	endpointRepo           repository.EndpointRepository
 	DBPolicyDefaultsAllMap map[uint]models.DBPolicyDefault
+}
+
+func init() {
+	// Register privilege package dependencies to break circular import
+	privilege.RegisterNewPolicyEvaluator(func() privilege.PolicyEvaluator {
+		return NewDBPolicyService().(*dbPolicyService)
+	})
+	privilege.RegisterRetrieveJobResults(func(jobID string, ep *models.Endpoint) ([]privilege.QueryResult, error) {
+		results, err := retrieveJobResults(jobID, ep)
+		if err != nil {
+			return nil, err
+		}
+		// Convert internal QueryResult to privilege.QueryResult
+		out := make([]privilege.QueryResult, len(results))
+		for i, r := range results {
+			out[i] = privilege.QueryResult{
+				QueryKey:    r.QueryKey,
+				Query:       r.Query,
+				Status:      r.Status,
+				Result:      r.Result,
+				ExecuteTime: r.ExecuteTime,
+				DurationMs:  r.DurationMs,
+			}
+		}
+		return out, nil
+	})
+	privilege.RegisterGetEndpointForJob(getEndpointForJob)
 }
 
 // NewDBPolicyService creates a new database policy service instance.
@@ -629,7 +658,7 @@ func (s *dbPolicyService) GetByCntMgtWithPrivilegeSession(ctx context.Context, i
 
 	// Prepare context data for job completion callback
 	sessionID := fmt.Sprintf("cntmgt_%d_%d", id, time.Now().UnixNano())
-	sessionContext := &PrivilegeSessionJobContext{
+	sessionContext := &privilege.PrivilegeSessionJobContext{
 		CntMgtID:      id,
 		DbMgts:        dbmgts,
 		DbActorMgts:   dbActorMgts,
@@ -645,7 +674,7 @@ func (s *dbPolicyService) GetByCntMgtWithPrivilegeSession(ctx context.Context, i
 
 	// Register job with monitoring system
 	jobMonitor := job.GetJobMonitorService()
-	completionCallback := CreatePrivilegeSessionCompletionHandler()
+	completionCallback := privmysql.CreatePrivilegeSessionCompletionHandler()
 	jobMonitor.AddJobWithCallback(jobResp.JobID, id, ep.ClientID, ep.OsType, completionCallback, contextData)
 
 	logger.Infof("Privilege session job added to monitoring: job_id=%s, cntmgt_id=%d, databases=%d", jobResp.JobID, id, len(dbmgts))
@@ -832,6 +861,31 @@ func (s *dbPolicyService) isPolicyAllowed(output, resAllow, resDeny string) bool
 	return false
 }
 
+// IsPolicyAllowed implements privilege.PolicyEvaluator interface.
+func (s *dbPolicyService) IsPolicyAllowed(output, resAllow, resDeny string) bool {
+	return s.isPolicyAllowed(output, resAllow, resDeny)
+}
+
+// ExtractResultValue implements privilege.PolicyEvaluator interface.
+func (s *dbPolicyService) ExtractResultValue(result []map[string]interface{}) string {
+	return s.extractResultValue(result)
+}
+
+// GetPolicyDefaultsMap implements privilege.PolicyEvaluator interface.
+func (s *dbPolicyService) GetPolicyDefaultsMap() map[uint]models.DBPolicyDefault {
+	return s.DBPolicyDefaultsAllMap
+}
+
+// GetDBActorMgts implements privilege.PolicyEvaluator interface.
+func (s *dbPolicyService) GetDBActorMgts(tx *gorm.DB, cntID uint) ([]*models.DBActorMgt, error) {
+	return s.getDBActorMgts(tx, cntID)
+}
+
+// GetDBObjectsByObjectIdAndDbMgt implements privilege.PolicyEvaluator interface.
+func (s *dbPolicyService) GetDBObjectsByObjectIdAndDbMgt(tx *gorm.DB, objectID int, dbMgtID uint) ([]models.DBObjectMgt, error) {
+	return s.dbObjectMgtRepo.GetByObjectIdAndDbMgtInt(tx, objectID, dbMgtID)
+}
+
 // buildPrivilegeDataQueries builds queries to fetch all privilege table data
 func (s *dbPolicyService) buildPrivilegeDataQueries(actors []models.DBActorMgt, databases []models.DBMgt) (map[string][]string, error) {
 	// Build filters for actors
@@ -924,9 +978,10 @@ func buildGranteeFilter(actors []models.DBActorMgt) string {
 	return strings.Join(grantees, ", ")
 }
 
-// escapeSQL escapes single quotes in SQL strings
+// escapeSQL escapes single quotes in SQL strings.
+// Delegates to utils.EscapeSQL for shared implementation.
 func escapeSQL(s string) string {
-	return strings.ReplaceAll(s, "'", "''")
+	return utils.EscapeSQL(s)
 }
 
 // writePrivilegeQueryFile writes privilege queries to JSON file
