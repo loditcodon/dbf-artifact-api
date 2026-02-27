@@ -1,7 +1,7 @@
 # DBF Artifact API - System Architecture
 
 **Version:** 1.0
-**Last Updated:** 2026-02-26
+**Last Updated:** 2026-02-27
 **Status:** Active Development
 
 ---
@@ -71,7 +71,7 @@ The DBF Artifact API is a layered, service-oriented system for managing database
 ┌─────────────────────────────────────────────────────────────────┐
 │ Service Layer (33 services)                                     │
 ├─────────────────────────────────────────────────────────────────┤
-│ Policy Services           Job Management              │
+│ Policy Services           Job Management (`services/job/`)  │
 │ ├─ DBPolicy              ├─ JobMonitor                │
 │ ├─ DBMgt                 ├─ PolicyCompletion          │
 │ ├─ DBActorMgt            ├─ BulkCompletion            │
@@ -355,7 +355,7 @@ Background Job Submitted (job_id: "abc123")
 - `downloadFileAgentAPI()` - Download files from agent
 - `executeConnectionTestAgentAPI()` - Test database connectivity
 
-### Job Monitor Service (Singleton)
+### Job Monitor Service (`services/job/`, Singleton)
 
 **Responsibilities:**
 - Register background jobs
@@ -624,6 +624,6 @@ go test -cover ./...
 
 ---
 
-**Last Updated:** 2026-02-26
+**Last Updated:** 2026-02-27
 **Architecture Owner:** DBF Architecture Team
 **Next Review:** 2026-05-24
