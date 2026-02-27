@@ -81,10 +81,13 @@ The DBF Artifact API is a layered, service-oriented system for managing database
 │ Privilege Discovery (`services/privilege/`)            │
 │ ├─ privilege/ (shared types, registry, session)        │
 │ ├─ privilege/mysql/ (MySQL handler+session)            │
-│ ├─ OraclePrivilegeSession  Infrastructure             │
-│ └─ Oracle Handlers          ├─ AgentAPI               │
-│                              ├─ Backup/Upload/Download│
-│                              └─ Connection Testing    │
+│ ├─ privilege/oracle/ (Oracle handler+session+queries)  │
+│ └─ Oracle/MySQL wrapper delegates in services/         │
+│                                                       │
+│ Infrastructure                                        │
+│ ├─ AgentAPI               │
+│ ├─ Backup/Upload/Download│
+│ └─ Connection Testing    │
 └─────────────────────────────────────────────────────────────────┘
                               ↓
 ┌─────────────────────────────────────────────────────────────────┐
@@ -381,20 +384,26 @@ Background Job Submitted (job_id: "abc123")
 
 **Dependency Graph:**
 ```
-services/privilege      (no imports of services/ or privilege/mysql/)
-services/privilege/mysql (imports privilege, NOT services/)
-services/                (imports privilege AND privilege/mysql, registers via init())
+services/privilege        (no imports of services/ or privilege/mysql/ or privilege/oracle/)
+services/privilege/mysql  (imports privilege, NOT services/)
+services/privilege/oracle (imports privilege, NOT services/)
+services/                 (imports privilege, privilege/mysql, privilege/oracle, registers via init())
 ```
 
 **MySQL Privilege Session (`services/privilege/mysql/`):**
 - `session.go` — `NewMySQLPrivilegeSession()`, creates in-memory go-mysql-server with MySQL privilege tables
 - `handler.go` — `CreatePrivilegeSessionCompletionHandler()`, three-pass policy engine (SUPER → action-wide → object-specific)
 
-**Oracle Privilege Session (still in `services/`):**
-1. Create in-memory Oracle server
-2. Detect CDB vs PDB
-3. Execute Oracle-specific queries
-4. Handle role inheritance
+**Oracle Privilege Session (`services/privilege/oracle/`):**
+- `connection_helper.go` — CDB/PDB connection type detection, `GetOracleConnectionType()`, `GetObjectTypeWildcard()`
+- `session.go` — Oracle privilege data types (`OraclePrivilegeData`, `OracleSysPriv`, etc.)
+- `privilege_session.go` — `NewOraclePrivilegeSession()`, in-memory go-mysql-server with Oracle privilege tables, `ReplaceOracleDollarViews()`
+- `handler.go` — `CreateOraclePrivilegeSessionCompletionHandler()`, three-pass Oracle policy engine
+- `queries.go` — `BuildOraclePrivilegeDataQueries()`, `BuildOracleObjectQueries()`, column mappings
+
+**Thin wrappers in `services/` (backward compatibility):**
+- `oracle_connection_helper.go` — Type aliases and delegation wrappers for Oracle connection types
+- `oracle_privilege_queries.go` — `dbPolicyService` methods that delegate to `oracle.*`
 
 ### Completion Handlers
 

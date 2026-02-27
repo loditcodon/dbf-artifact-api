@@ -21,6 +21,7 @@ import (
 	"dbfartifactapi/services/job"
 	"dbfartifactapi/services/privilege"
 	privmysql "dbfartifactapi/services/privilege/mysql"
+	privoracle "dbfartifactapi/services/privilege/oracle"
 
 	"dbfartifactapi/utils"
 
@@ -797,7 +798,7 @@ func (s *dbPolicyService) GetByCntMgtWithOraclePrivilegeSession(ctx context.Cont
 
 	// Prepare context data for job completion callback
 	sessionID := fmt.Sprintf("oracle_cntmgt_%d_%d", id, time.Now().UnixNano())
-	sessionContext := &OraclePrivilegeSessionJobContext{
+	sessionContext := &privoracle.OraclePrivilegeSessionJobContext{
 		CntMgtID:      id,
 		CMT:           cmt,
 		EndpointID:    ep.ID,
@@ -814,7 +815,7 @@ func (s *dbPolicyService) GetByCntMgtWithOraclePrivilegeSession(ctx context.Cont
 
 	// Register job with monitoring system
 	jobMonitor := job.GetJobMonitorService()
-	completionCallback := CreateOraclePrivilegeSessionCompletionHandler()
+	completionCallback := privoracle.CreateOraclePrivilegeSessionCompletionHandler()
 	jobMonitor.AddJobWithCallback(jobResp.JobID, id, ep.ClientID, ep.OsType, completionCallback, contextData)
 
 	logger.Infof("Oracle privilege session job added to monitoring: job_id=%s, cntmgt_id=%d, schemas=%d, conn_type=%s",

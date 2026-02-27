@@ -1,4 +1,4 @@
-package services
+package oracle
 
 import (
 	"context"
@@ -16,10 +16,11 @@ import (
 	"github.com/dolthub/go-mysql-server/sql/types"
 
 	"dbfartifactapi/pkg/logger"
+	"dbfartifactapi/utils"
 )
 
-// PrivilegeSession represents a temporary in-memory MySQL server session for privilege analysis.
-// Used by Oracle privilege subsystem. MySQL privilege analysis uses services/privilege/ package.
+// PrivilegeSession represents a temporary in-memory MySQL server session for Oracle privilege analysis.
+// Uses go-mysql-server with Oracle privilege table schemas.
 type PrivilegeSession struct {
 	server    *server.Server
 	engine    *sqle.Engine
@@ -260,7 +261,7 @@ func NewOraclePrivilegeSession(ctx context.Context, sessionID string) (*Privileg
 }
 
 // LoadOraclePrivilegeDataFromResults loads parsed Oracle privilege data into in-memory tables.
-// Data comes from QueryResult parsed by oracle_privilege_session_handler.
+// Data comes from QueryResult parsed by oracle handler.
 func (s *PrivilegeSession) LoadOraclePrivilegeDataFromResults(privilegeData *OraclePrivilegeData) error {
 	session := memory.NewSession(sql.NewBaseSession(), s.provider)
 	ctx := sql.NewContext(context.Background(), sql.WithSession(session))
@@ -270,8 +271,8 @@ func (s *PrivilegeSession) LoadOraclePrivilegeDataFromResults(privilegeData *Ora
 	for _, priv := range privilegeData.SysPrivs {
 		insertSQL := fmt.Sprintf(
 			"INSERT INTO DBA_SYS_PRIVS (GRANTEE, PRIVILEGE, ADMIN_OPTION, COMMON, INHERITED) VALUES ('%s', '%s', '%s', '%s', '%s')",
-			escapeSQL(priv.Grantee), escapeSQL(priv.Privilege), escapeSQL(priv.AdminOption),
-			escapeSQL(priv.Common), escapeSQL(priv.Inherited))
+			utils.EscapeSQL(priv.Grantee), utils.EscapeSQL(priv.Privilege), utils.EscapeSQL(priv.AdminOption),
+			utils.EscapeSQL(priv.Common), utils.EscapeSQL(priv.Inherited))
 
 		if _, _, _, err := s.engine.Query(ctx, insertSQL); err != nil {
 			logger.Warnf("Failed to insert into DBA_SYS_PRIVS: %v", err)
@@ -283,9 +284,9 @@ func (s *PrivilegeSession) LoadOraclePrivilegeDataFromResults(privilegeData *Ora
 	for _, priv := range privilegeData.TabPrivs {
 		insertSQL := fmt.Sprintf(
 			"INSERT INTO DBA_TAB_PRIVS (GRANTEE, OWNER, TABLE_NAME, GRANTOR, PRIVILEGE, GRANTABLE, HIERARCHY, COMMON, TYPE, INHERITED) VALUES ('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s')",
-			escapeSQL(priv.Grantee), escapeSQL(priv.Owner), escapeSQL(priv.TableName),
-			escapeSQL(priv.Grantor), escapeSQL(priv.Privilege), escapeSQL(priv.Grantable),
-			escapeSQL(priv.Hierarchy), escapeSQL(priv.Common), escapeSQL(priv.Type), escapeSQL(priv.Inherited))
+			utils.EscapeSQL(priv.Grantee), utils.EscapeSQL(priv.Owner), utils.EscapeSQL(priv.TableName),
+			utils.EscapeSQL(priv.Grantor), utils.EscapeSQL(priv.Privilege), utils.EscapeSQL(priv.Grantable),
+			utils.EscapeSQL(priv.Hierarchy), utils.EscapeSQL(priv.Common), utils.EscapeSQL(priv.Type), utils.EscapeSQL(priv.Inherited))
 
 		if _, _, _, err := s.engine.Query(ctx, insertSQL); err != nil {
 			logger.Warnf("Failed to insert into DBA_TAB_PRIVS: %v", err)
@@ -297,8 +298,8 @@ func (s *PrivilegeSession) LoadOraclePrivilegeDataFromResults(privilegeData *Ora
 	for _, priv := range privilegeData.RolePrivs {
 		insertSQL := fmt.Sprintf(
 			"INSERT INTO DBA_ROLE_PRIVS (GRANTEE, GRANTED_ROLE, ADMIN_OPTION, DELEGATE_OPTION, DEFAULT_ROLE, COMMON, INHERITED) VALUES ('%s', '%s', '%s', '%s', '%s', '%s', '%s')",
-			escapeSQL(priv.Grantee), escapeSQL(priv.GrantedRole), escapeSQL(priv.AdminOption),
-			escapeSQL(priv.DelegateOpt), escapeSQL(priv.DefaultRole), escapeSQL(priv.Common), escapeSQL(priv.Inherited))
+			utils.EscapeSQL(priv.Grantee), utils.EscapeSQL(priv.GrantedRole), utils.EscapeSQL(priv.AdminOption),
+			utils.EscapeSQL(priv.DelegateOpt), utils.EscapeSQL(priv.DefaultRole), utils.EscapeSQL(priv.Common), utils.EscapeSQL(priv.Inherited))
 
 		if _, _, _, err := s.engine.Query(ctx, insertSQL); err != nil {
 			logger.Warnf("Failed to insert into DBA_ROLE_PRIVS: %v", err)
@@ -310,8 +311,8 @@ func (s *PrivilegeSession) LoadOraclePrivilegeDataFromResults(privilegeData *Ora
 	for _, user := range privilegeData.PwFileUsers {
 		insertSQL := fmt.Sprintf(
 			"INSERT INTO V_PWFILE_USERS (USERNAME, SYSDBA, SYSOPER, SYSASM, SYSBACKUP, SYSDG, SYSKM) VALUES ('%s', '%s', '%s', '%s', '%s', '%s', '%s')",
-			escapeSQL(user.Username), escapeSQL(user.Sysdba), escapeSQL(user.Sysoper),
-			escapeSQL(user.Sysasm), escapeSQL(user.Sysbackup), escapeSQL(user.Sysdg), escapeSQL(user.Syskm))
+			utils.EscapeSQL(user.Username), utils.EscapeSQL(user.Sysdba), utils.EscapeSQL(user.Sysoper),
+			utils.EscapeSQL(user.Sysasm), utils.EscapeSQL(user.Sysbackup), utils.EscapeSQL(user.Sysdg), utils.EscapeSQL(user.Syskm))
 
 		if _, _, _, err := s.engine.Query(ctx, insertSQL); err != nil {
 			logger.Warnf("Failed to insert into V_PWFILE_USERS: %v", err)
@@ -323,8 +324,8 @@ func (s *PrivilegeSession) LoadOraclePrivilegeDataFromResults(privilegeData *Ora
 	for _, priv := range privilegeData.CdbSysPrivs {
 		insertSQL := fmt.Sprintf(
 			"INSERT INTO CDB_SYS_PRIVS (GRANTEE, PRIVILEGE, ADMIN_OPTION, COMMON, INHERITED, CON_ID) VALUES ('%s', '%s', '%s', '%s', '%s', '%d')",
-			escapeSQL(priv.Grantee), escapeSQL(priv.Privilege), escapeSQL(priv.AdminOption),
-			escapeSQL(priv.Common), escapeSQL(priv.Inherited), priv.ConID)
+			utils.EscapeSQL(priv.Grantee), utils.EscapeSQL(priv.Privilege), utils.EscapeSQL(priv.AdminOption),
+			utils.EscapeSQL(priv.Common), utils.EscapeSQL(priv.Inherited), priv.ConID)
 
 		if _, _, _, err := s.engine.Query(ctx, insertSQL); err != nil {
 			logger.Warnf("Failed to insert into CDB_SYS_PRIVS: %v", err)
@@ -340,16 +341,16 @@ func (s *PrivilegeSession) LoadOraclePrivilegeDataFromResults(privilegeData *Ora
 // Replaces V$* dynamic performance views with V_* since $ not allowed in table/view names.
 func (s *PrivilegeSession) ExecuteOracleTemplate(sqlTemplate string, variables map[string]string) ([]map[string]interface{}, error) {
 	// Replace Oracle V$ views with V_ equivalents ($ not allowed in go-mysql-server identifiers)
-	finalSQL := replaceOracleDollarViews(sqlTemplate)
+	finalSQL := ReplaceOracleDollarViews(sqlTemplate)
 
 	return s.ExecuteInDatabase(finalSQL, "oracle", variables)
 }
 
-// replaceOracleDollarViews replaces Oracle V$* and GV$* dynamic performance views with V_* and GV_* equivalents.
+// ReplaceOracleDollarViews replaces Oracle V$* and GV$* dynamic performance views with V_* and GV_* equivalents.
 // go-mysql-server doesn't support $ in identifiers, so we rename these views.
 // Uses case-insensitive regex to catch ALL V$* and GV$* patterns (both v$pwfile_users and V$PWFILE_USERS).
 // Also replaces other Oracle internal tables with $ like X$*.
-func replaceOracleDollarViews(sqlStr string) string {
+func ReplaceOracleDollarViews(sqlStr string) string {
 	// Pattern 1: V$VIEW_NAME -> V_VIEW_NAME (case-insensitive)
 	vDollarRegex := regexp.MustCompile(`(?i)\bV\$([A-Za-z0-9_]+)`)
 	result := vDollarRegex.ReplaceAllString(sqlStr, "V_$1")

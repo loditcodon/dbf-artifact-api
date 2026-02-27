@@ -1,4 +1,4 @@
-package services
+package oracle
 
 import (
 	"dbfartifactapi/models"
@@ -87,21 +87,4 @@ type OraclePrivilegeSessionJobContext struct {
 	DbMgts        []models.DBMgt       `json:"db_mgts"`
 	SessionID     string               `json:"session_id"`
 	PrivilegeFile string               `json:"privilege_file"`
-}
-
-// OraclePolicyClassification categorizes Oracle policy templates by execution order.
-// Similar to MySQL policyClassification but adapted for Oracle privilege hierarchy.
-type OraclePolicyClassification struct {
-	SuperPrivileges     []models.DBPolicyDefault // SYSDBA, SYSOPER - highest privileges
-	SystemWidePrivs     []models.DBPolicyDefault // System privileges (CREATE SESSION, etc.)
-	ObjectSpecificPrivs []models.DBPolicyDefault // Object-level privileges (SELECT, INSERT, etc.)
-}
-
-// OraclePrivilegeMapping maps Oracle privilege names to DBPolicyDefault IDs.
-// Used to match Oracle privileges from DBA_SYS_PRIVS/DBA_TAB_PRIVS to policy templates.
-type OraclePrivilegeMapping struct {
-	PrivilegeName   string // Oracle privilege name (e.g., "SELECT", "CREATE SESSION")
-	PrivilegeType   string // SYS, TAB, PWFILE
-	PolicyDefaultID uint   // Corresponding DBPolicyDefault ID
-	ObjectType      string // Object type filter (TABLE, VIEW, etc.) or empty for system privileges
 }

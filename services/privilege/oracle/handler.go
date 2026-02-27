@@ -1,4 +1,4 @@
-package services
+package oracle
 
 import (
 	"context"
@@ -16,6 +16,7 @@ import (
 	"dbfartifactapi/pkg/logger"
 	"dbfartifactapi/repository"
 	"dbfartifactapi/services/job"
+	"dbfartifactapi/services/privilege"
 	"dbfartifactapi/utils"
 
 	"gorm.io/gorm"
@@ -23,6 +24,103 @@ import (
 
 // processedOraclePrivilegeJobs tracks Oracle jobs that have already been processed to prevent duplicate execution
 var processedOraclePrivilegeJobs sync.Map
+
+// policyInput represents a processed Oracle policy query ready for execution.
+type policyInput struct {
+	policydf models.DBPolicyDefault
+	actorId  uint
+	objectId int
+	dbmgtId  int
+	finalSQL string
+}
+
+// policyClassification categorizes Oracle policy templates by execution order.
+type policyClassification struct {
+	superPrivileges     []models.DBPolicyDefault
+	actionWidePrivs     []models.DBPolicyDefault
+	objectSpecificPrivs []models.DBPolicyDefault
+}
+
+// grantedActionsCache tracks which actions have been granted to which actors.
+type grantedActionsCache struct {
+	mu      sync.RWMutex
+	granted map[uint]map[int]bool // actorID -> actionID -> granted
+}
+
+// allowedPolicyResults tracks which policies were allowed for each actor.
+type allowedPolicyResults struct {
+	mu            sync.Mutex
+	actorPolicies map[uint]map[uint]bool // actorID -> policyDefaultID -> true
+}
+
+// superPrivilegeActors tracks actors that have been granted super privileges.
+type superPrivilegeActors struct {
+	mu     sync.RWMutex
+	actors map[uint]bool
+}
+
+func newGrantedActionsCache() *grantedActionsCache {
+	return &grantedActionsCache{
+		granted: make(map[uint]map[int]bool),
+	}
+}
+
+func (c *grantedActionsCache) markGranted(actorID uint, actionID int) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if c.granted[actorID] == nil {
+		c.granted[actorID] = make(map[int]bool)
+	}
+	c.granted[actorID][actionID] = true
+}
+
+func (c *grantedActionsCache) isGranted(actorID uint, actionID int) bool {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+	if actions, ok := c.granted[actorID]; ok {
+		return actions[actionID]
+	}
+	return false
+}
+
+func newAllowedPolicyResults() *allowedPolicyResults {
+	return &allowedPolicyResults{
+		actorPolicies: make(map[uint]map[uint]bool),
+	}
+}
+
+func (a *allowedPolicyResults) recordAllowed(actorID uint, policyDefaultID uint) {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	if a.actorPolicies[actorID] == nil {
+		a.actorPolicies[actorID] = make(map[uint]bool)
+	}
+	a.actorPolicies[actorID][policyDefaultID] = true
+}
+
+func newSuperPrivilegeActors() *superPrivilegeActors {
+	return &superPrivilegeActors{
+		actors: make(map[uint]bool),
+	}
+}
+
+func (s *superPrivilegeActors) markSuperPrivilege(actorID uint) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.actors[actorID] = true
+}
+
+func (s *superPrivilegeActors) hasSuperPrivilege(actorID uint) bool {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return s.actors[actorID]
+}
+
+// groupListPolicy maps a list policy ID to its set of required policy default IDs.
+type groupListPolicy struct {
+	listPolicyID     uint
+	policyDefaultIDs map[uint]bool
+}
 
 // CreateOraclePrivilegeSessionCompletionHandler creates callback for Oracle privilege session job completion.
 // Handles both notification-based and VeloArtifact polling completion flows.
@@ -142,7 +240,7 @@ func processOraclePrivilegeSessionFromVeloArtifact(jobID string, sessionContext 
 	jobMonitor := job.GetJobMonitorService()
 
 	// Get endpoint information
-	ep, err := getEndpointForJob(jobID, sessionContext.EndpointID)
+	ep, err := privilege.GetEndpointForJob(jobID, sessionContext.EndpointID)
 	if err != nil {
 		jobMonitor.FailJobAfterProcessing(jobID, err.Error())
 		return err
@@ -175,7 +273,7 @@ func processOraclePrivilegeSessionFromVeloArtifact(jobID string, sessionContext 
 }
 
 // parseOraclePrivilegeDataFile reads and parses Oracle privilege data results file.
-func parseOraclePrivilegeDataFile(filePath string) ([]QueryResult, error) {
+func parseOraclePrivilegeDataFile(filePath string) ([]privilege.QueryResult, error) {
 	logger.Debugf("Reading Oracle privilege data file: %s", filePath)
 
 	// Read file content
@@ -185,7 +283,7 @@ func parseOraclePrivilegeDataFile(filePath string) ([]QueryResult, error) {
 	}
 
 	// Parse JSON content
-	var resultsData []QueryResult
+	var resultsData []privilege.QueryResult
 	if err := json.Unmarshal(fileData, &resultsData); err != nil {
 		return nil, fmt.Errorf("failed to parse JSON from oracle file %s: %v", filePath, err)
 	}
@@ -195,9 +293,8 @@ func parseOraclePrivilegeDataFile(filePath string) ([]QueryResult, error) {
 }
 
 // retrieveOraclePrivilegeDataResults gets Oracle privilege data from VeloArtifact.
-func retrieveOraclePrivilegeDataResults(jobID string, ep *models.Endpoint) ([]QueryResult, error) {
-	// Use same logic as policy results retrieval
-	return retrieveJobResults(jobID, ep)
+func retrieveOraclePrivilegeDataResults(jobID string, ep *models.Endpoint) ([]privilege.QueryResult, error) {
+	return privilege.RetrieveJobResults(jobID, ep)
 }
 
 // createOraclePoliciesWithPrivilegeData creates policies using three-pass execution strategy for Oracle databases.
@@ -205,7 +302,7 @@ func retrieveOraclePrivilegeDataResults(jobID string, ep *models.Endpoint) ([]Qu
 // Pass 1: Super privileges - actor_id=-1, object_id=-1, dbmgt_id=-1
 // Pass 2: Action-wide privileges (DBGroupListPolicies) - object_id=-1, dbmgt_id=-1
 // Pass 3: Object-specific privileges - normal policies with specific objects/databases
-func createOraclePoliciesWithPrivilegeData(jobID string, sessionContext *OraclePrivilegeSessionJobContext, privilegeData []QueryResult) (int, error) {
+func createOraclePoliciesWithPrivilegeData(jobID string, sessionContext *OraclePrivilegeSessionJobContext, privilegeData []privilege.QueryResult) (int, error) {
 	// Idempotency check: prevent duplicate processing from notification + polling
 	if _, alreadyProcessed := processedOraclePrivilegeJobs.LoadOrStore(jobID, true); alreadyProcessed {
 		logger.Warnf("Oracle job %s already processed, skipping duplicate execution", jobID)
@@ -269,10 +366,10 @@ func createOraclePoliciesWithPrivilegeData(jobID string, sessionContext *OracleP
 		}
 	}()
 
-	service := NewDBPolicyService().(*dbPolicyService)
+	service := privilege.NewPolicyEvaluator()
 
 	// Classify Oracle policy templates (database_type_id = 3)
-	classification := classifyOraclePolicyTemplates(service.DBPolicyDefaultsAllMap)
+	classification := classifyOraclePolicyTemplates(service.GetPolicyDefaultsMap())
 	grantedActions := newGrantedActionsCache()
 	allowedResults := newAllowedPolicyResults()
 	superPrivActors := newSuperPrivilegeActors()
@@ -505,7 +602,7 @@ func processOracleSQLTemplatesForSession(
 	dbMgts []models.DBMgt,
 	actors []models.DBActorMgt,
 	cmt *models.CntMgt,
-	service *dbPolicyService,
+	service privilege.PolicyEvaluator,
 	connType OracleConnectionType,
 ) (map[string]policyInput, error) {
 	queries := make(map[string]policyInput)
@@ -524,8 +621,7 @@ func processOracleSQLTemplatesForSession(
 
 		rawSQL := string(sqlBytes)
 
-		// Replace V$PWFILE_USERS with V_PWFILE_USERS for go-mysql-server compatibility
-		rawSQL = strings.ReplaceAll(rawSQL, "V$PWFILE_USERS", "V_PWFILE_USERS")
+		// Note: V$ → V_ replacement handled by ExecuteOracleTemplate → ReplaceOracleDollarViews
 
 		// Oracle CDB/PDB scope substitution: CDB→"*", PDB→"PDB"
 		scopeValue := GetObjectTypeWildcard(connType)
@@ -564,14 +660,13 @@ func processOracleSQLTemplatesForSession(
 
 // processOracleSpecificSQLTemplatesForSession builds SQL queries for specific objects (objectId != -1).
 // Uses SqlGetSpecific template and substitutes ${dbobjectmgt.objectname} with actual object names.
-// Similar to MySQL's processSpecificSQLTemplatesForSession but adapted for Oracle.
 func processOracleSpecificSQLTemplatesForSession(
 	tx *gorm.DB,
 	policies []models.DBPolicyDefault,
 	dbMgts []models.DBMgt,
 	actors []models.DBActorMgt,
 	cmt *models.CntMgt,
-	service *dbPolicyService,
+	service privilege.PolicyEvaluator,
 	connType OracleConnectionType,
 	cache *oracleQueryBuildCache,
 ) (map[string]policyInput, error) {
@@ -591,8 +686,7 @@ func processOracleSpecificSQLTemplatesForSession(
 
 		rawSQL := string(sqlBytes)
 
-		// Replace V$PWFILE_USERS with V_PWFILE_USERS for go-mysql-server compatibility
-		rawSQL = strings.ReplaceAll(rawSQL, "V$PWFILE_USERS", "V_PWFILE_USERS")
+		// Note: V$ → V_ replacement handled by ExecuteOracleTemplate → ReplaceOracleDollarViews
 
 		// Oracle CDB/PDB scope substitution: CDB→"*", PDB→"PDB"
 		scopeValue := GetObjectTypeWildcard(connType)
@@ -771,7 +865,7 @@ func executeOracleSuperPrivilegeQueries(
 	tx *gorm.DB,
 	session *PrivilegeSession,
 	queries map[string]policyInput,
-	service *dbPolicyService,
+	service privilege.PolicyEvaluator,
 	cntMgtID uint,
 	cmt *models.CntMgt,
 	allowedResults *allowedPolicyResults,
@@ -781,7 +875,7 @@ func executeOracleSuperPrivilegeQueries(
 	type queryResult struct {
 		uniqueKey  string
 		policyData policyInput
-		finalSQL   string // Store SQL for logging after collection
+		finalSQL   string
 		results    []map[string]interface{}
 		err        error
 	}
@@ -820,7 +914,6 @@ func executeOracleSuperPrivilegeQueries(
 	allResults := make([]queryResult, 0, queryCount)
 	for i := 0; i < queryCount; i++ {
 		result := <-resultsChan
-		// Write to log file after collection (batch write, avoids I/O contention)
 		writeOracleQueryToLogFile(logFile, "PASS-1-SUPER", result.uniqueKey, result.finalSQL)
 		if result.err != nil {
 			logger.Debugf("Oracle super privilege query failed for key=%s: %v", result.uniqueKey, result.err)
@@ -864,7 +957,7 @@ func executeOracleActionWideQueries(
 	tx *gorm.DB,
 	session *PrivilegeSession,
 	queries map[string]policyInput,
-	service *dbPolicyService,
+	service privilege.PolicyEvaluator,
 	cntMgtID uint,
 	cmt *models.CntMgt,
 	grantedActions *grantedActionsCache,
@@ -875,7 +968,7 @@ func executeOracleActionWideQueries(
 	type queryResult struct {
 		uniqueKey  string
 		policyData policyInput
-		finalSQL   string // Store SQL for logging after collection
+		finalSQL   string
 		results    []map[string]interface{}
 		err        error
 	}
@@ -928,7 +1021,6 @@ func executeOracleActionWideQueries(
 	allResults := make([]queryResult, 0, queryCount)
 	for i := 0; i < queryCount; i++ {
 		result := <-resultsChan
-		// Write to log file after collection (batch write, avoids I/O contention)
 		writeOracleQueryToLogFile(logFile, "PASS-2-ACTION", result.uniqueKey, result.finalSQL)
 		if result.err != nil {
 			logger.Debugf("Oracle action-wide query failed for key=%s: %v", result.uniqueKey, result.err)
@@ -967,7 +1059,7 @@ func executeOracleObjectSpecificQueries(
 	tx *gorm.DB,
 	session *PrivilegeSession,
 	queries map[string]policyInput,
-	service *dbPolicyService,
+	service privilege.PolicyEvaluator,
 	cntMgtID uint,
 	grantedActions *grantedActionsCache,
 	allowedResults *allowedPolicyResults,
@@ -977,7 +1069,7 @@ func executeOracleObjectSpecificQueries(
 	type queryResult struct {
 		uniqueKey  string
 		policyData policyInput
-		finalSQL   string // Store SQL for logging after collection
+		finalSQL   string
 		results    []map[string]interface{}
 		err        error
 	}
@@ -1033,7 +1125,6 @@ func executeOracleObjectSpecificQueries(
 	allResults := make([]queryResult, 0, queryCount)
 	for i := 0; i < queryCount; i++ {
 		result := <-resultsChan
-		// Write to log file after collection (batch write, avoids I/O contention)
 		writeOracleQueryToLogFile(logFile, "PASS-3-OBJECT", result.uniqueKey, result.finalSQL)
 		if result.err != nil {
 			logger.Debugf("Oracle object-specific query failed for key=%s: %v", result.uniqueKey, result.err)
@@ -1113,7 +1204,7 @@ func createOraclePolicyRecord(tx *gorm.DB, cntMgtID uint, input policyInput) err
 		DBActorMgt:      input.actorId,
 		DBObjectMgt:     input.objectId,
 		Status:          "enabled",
-		Description:     fmt.Sprintf("Auto-inserted from Oracle privilege session"),
+		Description:     "Auto-collected by V2-DBF Agent",
 	}
 
 	if err := tx.Create(&policy).Error; err != nil {
@@ -1139,7 +1230,7 @@ func writeOracleQueryToLogFile(logFile *os.File, passName, uniqueKey, query stri
 
 // parseOraclePrivilegeResults converts query results into structured Oracle privilege data.
 // Maps query keys to appropriate privilege structs based on Oracle system table names.
-func parseOraclePrivilegeResults(results []QueryResult, connType OracleConnectionType) (*OraclePrivilegeData, error) {
+func parseOraclePrivilegeResults(results []privilege.QueryResult, connType OracleConnectionType) (*OraclePrivilegeData, error) {
 	data := &OraclePrivilegeData{
 		SysPrivs:    []OracleSysPriv{},
 		TabPrivs:    []OracleTabPriv{},
@@ -1216,7 +1307,7 @@ func parseOraclePrivilegeResults(results []QueryResult, connType OracleConnectio
 func parseDbasSysPrivs(rows [][]interface{}) ([]OracleSysPriv, error) {
 	privs := make([]OracleSysPriv, 0, len(rows))
 
-	columns, err := getOraclePrivilegeColumnNames("dba_sys_privs")
+	columns, err := GetOraclePrivilegeColumnNames("dba_sys_privs")
 	if err != nil {
 		return nil, err
 	}
@@ -1243,7 +1334,7 @@ func parseDbasSysPrivs(rows [][]interface{}) ([]OracleSysPriv, error) {
 func parseDbasTabPrivs(rows [][]interface{}) ([]OracleTabPriv, error) {
 	privs := make([]OracleTabPriv, 0, len(rows))
 
-	columns, err := getOraclePrivilegeColumnNames("dba_tab_privs")
+	columns, err := GetOraclePrivilegeColumnNames("dba_tab_privs")
 	if err != nil {
 		return nil, err
 	}
@@ -1275,7 +1366,7 @@ func parseDbasTabPrivs(rows [][]interface{}) ([]OracleTabPriv, error) {
 func parseDbasRolePrivs(rows [][]interface{}) ([]OracleRolePriv, error) {
 	privs := make([]OracleRolePriv, 0, len(rows))
 
-	columns, err := getOraclePrivilegeColumnNames("dba_role_privs")
+	columns, err := GetOraclePrivilegeColumnNames("dba_role_privs")
 	if err != nil {
 		return nil, err
 	}
@@ -1304,7 +1395,7 @@ func parseDbasRolePrivs(rows [][]interface{}) ([]OracleRolePriv, error) {
 func parsePwFileUsers(rows [][]interface{}) ([]OraclePwFileUser, error) {
 	users := make([]OraclePwFileUser, 0, len(rows))
 
-	columns, err := getOraclePrivilegeColumnNames("v$pwfile_users")
+	columns, err := GetOraclePrivilegeColumnNames("v$pwfile_users")
 	if err != nil {
 		return nil, err
 	}
@@ -1333,7 +1424,7 @@ func parsePwFileUsers(rows [][]interface{}) ([]OraclePwFileUser, error) {
 func parseCdbSysPrivs(rows [][]interface{}) ([]OracleCdbSysPriv, error) {
 	privs := make([]OracleCdbSysPriv, 0, len(rows))
 
-	columns, err := getOraclePrivilegeColumnNames("cdb_sys_privs")
+	columns, err := GetOraclePrivilegeColumnNames("cdb_sys_privs")
 	if err != nil {
 		return nil, err
 	}
@@ -1382,6 +1473,36 @@ func safeInt(v interface{}) int {
 	}
 }
 
+// collectExactMatchGroups finds group list policies where actor has all required policy defaults.
+func collectExactMatchGroups(actorPolicies map[uint]bool, groupListPolicies []groupListPolicy) []uint {
+	var matchedIDs []uint
+	for _, glp := range groupListPolicies {
+		if isExactMatch(actorPolicies, glp.policyDefaultIDs) {
+			matchedIDs = append(matchedIDs, glp.listPolicyID)
+		}
+	}
+	return matchedIDs
+}
+
+// isExactMatch checks if actor's policies are a superset of the group's required policies.
+func isExactMatch(actorPolicies map[uint]bool, groupPolicies map[uint]bool) bool {
+	for requiredID := range groupPolicies {
+		if !actorPolicies[requiredID] {
+			return false
+		}
+	}
+	return true
+}
+
+// getPolicyIDsAsSlice converts policy ID map to sorted slice for logging.
+func getPolicyIDsAsSlice(policyMap map[uint]bool) []uint {
+	result := make([]uint, 0, len(policyMap))
+	for id := range policyMap {
+		result = append(result, id)
+	}
+	return result
+}
+
 // assignOracleActorsToGroups assigns Oracle actors to groups based on privilege evaluation results.
 // Oracle uses superPrivGroupID = 1000 (different from MySQL's group 1).
 // Uses same logic as MySQL's assignActorsToGroups but with Oracle-specific group ID.
@@ -1405,7 +1526,7 @@ func assignOracleActorsToGroups(tx *gorm.DB, cntMgtID uint, cmt *models.CntMgt, 
 	}
 
 	// Parse dbgroup_listpolicies to extract policy_default_ids
-	groupListPolicies := []groupListPolicy{}
+	groupListPoliciesData := []groupListPolicy{}
 	for _, glp := range allGroupListPolicies {
 		if glp.DBPolicyDefaultID == nil || *glp.DBPolicyDefaultID == "" {
 			continue
@@ -1442,7 +1563,7 @@ func assignOracleActorsToGroups(tx *gorm.DB, cntMgtID uint, cmt *models.CntMgt, 
 		}
 
 		if len(policyIDs) > 0 {
-			groupListPolicies = append(groupListPolicies, groupListPolicy{
+			groupListPoliciesData = append(groupListPoliciesData, groupListPolicy{
 				listPolicyID:     glp.ID,
 				policyDefaultIDs: policyIDs,
 			})
@@ -1531,7 +1652,7 @@ actorLoop:
 		}
 
 		// Level 1: Find which dbgroup_listpolicies the actor fully satisfies
-		satisfiedListPolicyIDs := collectExactMatchGroups(actorPolicyIDs, groupListPolicies)
+		satisfiedListPolicyIDs := collectExactMatchGroups(actorPolicyIDs, groupListPoliciesData)
 
 		if len(satisfiedListPolicyIDs) == 0 {
 			logger.Warnf("No satisfied listpolicies for Oracle actor %d (policies: %v) - skipping",
