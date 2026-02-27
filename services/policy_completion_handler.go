@@ -13,6 +13,7 @@ import (
 	"dbfartifactapi/pkg/logger"
 	"dbfartifactapi/repository"
 	"dbfartifactapi/services/agent"
+	"dbfartifactapi/services/job"
 	"dbfartifactapi/utils"
 
 	"gorm.io/gorm"
@@ -31,8 +32,8 @@ type GetResultsResponse struct {
 }
 
 // CreatePolicyCompletionHandler creates a callback function for policy job completion
-func CreatePolicyCompletionHandler() JobCompletionCallback {
-	return func(jobID string, jobInfo *JobInfo, statusResp *StatusResponse) error {
+func CreatePolicyCompletionHandler() job.JobCompletionCallback {
+	return func(jobID string, jobInfo *job.JobInfo, statusResp *job.StatusResponse) error {
 		logger.Infof("Processing policy completion for job %s, status: %s", jobID, statusResp.Status)
 
 		// Extract context data from job
@@ -52,7 +53,7 @@ func CreatePolicyCompletionHandler() JobCompletionCallback {
 }
 
 // processPolicyResults processes the results of a completed policy job
-func processPolicyResults(jobID string, contextData interface{}, statusResp *StatusResponse, jobInfo *JobInfo) error {
+func processPolicyResults(jobID string, contextData interface{}, statusResp *job.StatusResponse, jobInfo *job.JobInfo) error {
 	logger.Infof("Processing policy results for job %s - completed: %d, failed: %d",
 		jobID, statusResp.Completed, statusResp.Failed)
 
@@ -72,7 +73,7 @@ func processPolicyResults(jobID string, contextData interface{}, statusResp *Sta
 }
 
 // processPolicyResultsFromNotification handles policy processing when triggered by external notification
-func processPolicyResultsFromNotification(jobID string, policyContext *PolicyJobContext, notificationData interface{}, statusResp *StatusResponse) error {
+func processPolicyResultsFromNotification(jobID string, policyContext *PolicyJobContext, notificationData interface{}, statusResp *job.StatusResponse) error {
 	logger.Infof("Processing policy results from notification for job %s", jobID)
 
 	// Extract notification data
@@ -121,7 +122,7 @@ func processPolicyResultsFromNotification(jobID string, policyContext *PolicyJob
 }
 
 // processPolicyResultsFromVeloArtifact handles policy processing via traditional VeloArtifact polling
-func processPolicyResultsFromVeloArtifact(jobID string, policyContext *PolicyJobContext, statusResp *StatusResponse) error {
+func processPolicyResultsFromVeloArtifact(jobID string, policyContext *PolicyJobContext, statusResp *job.StatusResponse) error {
 	logger.Infof("Processing policy results from VeloArtifact polling for job %s", jobID)
 
 	// Get endpoint information
@@ -669,8 +670,8 @@ func processQueryResult(result [][]interface{}) string {
 }
 
 // CreateCombinedPolicyCompletionHandler creates a callback function for combined policy job completion
-func CreateCombinedPolicyCompletionHandler() JobCompletionCallback {
-	return func(jobID string, jobInfo *JobInfo, statusResp *StatusResponse) error {
+func CreateCombinedPolicyCompletionHandler() job.JobCompletionCallback {
+	return func(jobID string, jobInfo *job.JobInfo, statusResp *job.StatusResponse) error {
 		logger.Infof("Processing combined policy completion for job %s, status: %s", jobID, statusResp.Status)
 
 		// Extract context data from job
@@ -689,7 +690,7 @@ func CreateCombinedPolicyCompletionHandler() JobCompletionCallback {
 }
 
 // processCombinedPolicyResults processes the results of a completed combined policy job
-func processCombinedPolicyResults(jobID string, contextData interface{}, statusResp *StatusResponse, jobInfo *JobInfo) error {
+func processCombinedPolicyResults(jobID string, contextData interface{}, statusResp *job.StatusResponse, jobInfo *job.JobInfo) error {
 	logger.Infof("Processing combined policy results for job %s - completed: %d, failed: %d",
 		jobID, statusResp.Completed, statusResp.Failed)
 
@@ -709,7 +710,7 @@ func processCombinedPolicyResults(jobID string, contextData interface{}, statusR
 }
 
 // processCombinedPolicyResultsFromNotification handles combined policy processing when triggered by external notification
-func processCombinedPolicyResultsFromNotification(jobID string, combinedContext *CombinedPolicyJobContext, notificationData interface{}, statusResp *StatusResponse) error {
+func processCombinedPolicyResultsFromNotification(jobID string, combinedContext *CombinedPolicyJobContext, notificationData interface{}, statusResp *job.StatusResponse) error {
 	logger.Infof("Processing combined policy results from notification for job %s", jobID)
 
 	// Extract notification data
@@ -759,7 +760,7 @@ func processCombinedPolicyResultsFromNotification(jobID string, combinedContext 
 }
 
 // processCombinedPolicyResultsFromVeloArtifact handles combined policy processing via traditional VeloArtifact polling
-func processCombinedPolicyResultsFromVeloArtifact(jobID string, combinedContext *CombinedPolicyJobContext, statusResp *StatusResponse) error {
+func processCombinedPolicyResultsFromVeloArtifact(jobID string, combinedContext *CombinedPolicyJobContext, statusResp *job.StatusResponse) error {
 	logger.Infof("Processing combined policy results from VeloArtifact polling for job %s", jobID)
 
 	// Get endpoint information

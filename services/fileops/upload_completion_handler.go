@@ -7,7 +7,7 @@ import (
 
 	"dbfartifactapi/config"
 	"dbfartifactapi/pkg/logger"
-	"dbfartifactapi/services"
+	"dbfartifactapi/services/job"
 )
 
 // UploadJobContext holds context data for upload job completion processing.
@@ -21,8 +21,8 @@ type UploadJobContext struct {
 // CreateUploadCompletionHandler creates a callback function for upload job completion.
 // Stores upload file metadata (fileName, filePath, md5Hash) in job results
 // so that status check responses include full upload information.
-func CreateUploadCompletionHandler() services.JobCompletionCallback {
-	return func(jobID string, jobInfo *services.JobInfo, statusResp *services.StatusResponse) error {
+func CreateUploadCompletionHandler() job.JobCompletionCallback {
+	return func(jobID string, jobInfo *job.JobInfo, statusResp *job.StatusResponse) error {
 		logger.Infof("Processing upload completion for job %s, status: %s", jobID, statusResp.Status)
 
 		contextData, ok := jobInfo.ContextData["upload_context"]
@@ -43,7 +43,7 @@ func CreateUploadCompletionHandler() services.JobCompletionCallback {
 
 // processUploadResults processes upload job results and stores file metadata in job results.
 // Handles both notification-based and polling-based completion paths.
-func processUploadResults(jobID string, uploadContext *UploadJobContext, statusResp *services.StatusResponse, jobInfo *services.JobInfo) error {
+func processUploadResults(jobID string, uploadContext *UploadJobContext, statusResp *job.StatusResponse, jobInfo *job.JobInfo) error {
 	if statusResp.Status == "failed" {
 		logger.Errorf("Processing failed upload job %s: message=%s, error=%s",
 			jobID, statusResp.Message, statusResp.Error)
@@ -101,7 +101,7 @@ func processUploadResultsFromNotification(jobID string, notificationData interfa
 		},
 	}
 
-	jobMonitor := services.GetJobMonitorService()
+	jobMonitor := job.GetJobMonitorService()
 	jobMonitor.UpdateJobResults(jobID, results)
 
 	logger.Infof("Upload results stored for job %s: fileName=%s, filePath=%s, md5Hash=%s",
@@ -112,7 +112,7 @@ func processUploadResultsFromNotification(jobID string, notificationData interfa
 
 // processUploadResultsFromPolling handles upload completion detected via VeloArtifact polling.
 // Stores available context data without md5Hash (only available via notification).
-func processUploadResultsFromPolling(jobID string, uploadContext *UploadJobContext, statusResp *services.StatusResponse) error {
+func processUploadResultsFromPolling(jobID string, uploadContext *UploadJobContext, statusResp *job.StatusResponse) error {
 	logger.Infof("Processing upload results from polling for job %s", jobID)
 
 	results := map[string]interface{}{
@@ -124,7 +124,7 @@ func processUploadResultsFromPolling(jobID string, uploadContext *UploadJobConte
 		},
 	}
 
-	jobMonitor := services.GetJobMonitorService()
+	jobMonitor := job.GetJobMonitorService()
 	jobMonitor.UpdateJobResults(jobID, results)
 
 	logger.Infof("Upload results stored for job %s (via polling): fileName=%s, filePath=%s",

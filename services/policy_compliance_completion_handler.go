@@ -11,6 +11,7 @@ import (
 	"dbfartifactapi/pkg/logger"
 	"dbfartifactapi/repository"
 	"dbfartifactapi/services/agent"
+	"dbfartifactapi/services/job"
 )
 
 // PolicyComplianceJobContext contains context data for policy compliance job completion
@@ -40,8 +41,8 @@ type PolicyComplianceGetResultsResponse struct {
 }
 
 // CreatePolicyComplianceCompletionHandler creates a callback function for policy compliance job completion
-func CreatePolicyComplianceCompletionHandler() JobCompletionCallback {
-	return func(jobID string, jobInfo *JobInfo, statusResp *StatusResponse) error {
+func CreatePolicyComplianceCompletionHandler() job.JobCompletionCallback {
+	return func(jobID string, jobInfo *job.JobInfo, statusResp *job.StatusResponse) error {
 		logger.Infof("Processing policy compliance completion for job %s, status: %s", jobID, statusResp.Status)
 
 		// Extract context data from job
@@ -61,7 +62,7 @@ func CreatePolicyComplianceCompletionHandler() JobCompletionCallback {
 
 // processPolicyComplianceResults processes the results of a completed policy compliance job.
 // Routes to notification-based or VeloArtifact polling flow based on available data.
-func processPolicyComplianceResults(jobID string, contextData interface{}, statusResp *StatusResponse, jobInfo *JobInfo) error {
+func processPolicyComplianceResults(jobID string, contextData interface{}, statusResp *job.StatusResponse, jobInfo *job.JobInfo) error {
 	logger.Infof("Processing policy compliance results for job %s - completed: %d, failed: %d",
 		jobID, statusResp.Completed, statusResp.Failed)
 
@@ -69,7 +70,7 @@ func processPolicyComplianceResults(jobID string, contextData interface{}, statu
 	complianceContext, ok := contextData.(*PolicyComplianceJobContext)
 	if !ok {
 		err := fmt.Errorf("invalid policy compliance context data for job %s", jobID)
-		jobMonitor := GetJobMonitorService()
+		jobMonitor := job.GetJobMonitorService()
 		jobMonitor.FailJobAfterProcessing(jobID, err.Error())
 		return err
 	}
@@ -84,10 +85,10 @@ func processPolicyComplianceResults(jobID string, contextData interface{}, statu
 }
 
 // processPolicyComplianceResultsFromNotification handles policy compliance processing when triggered by external notification.
-func processPolicyComplianceResultsFromNotification(jobID string, complianceContext *PolicyComplianceJobContext, notificationData interface{}, statusResp *StatusResponse) error {
+func processPolicyComplianceResultsFromNotification(jobID string, complianceContext *PolicyComplianceJobContext, notificationData interface{}, statusResp *job.StatusResponse) error {
 	logger.Infof("Processing policy compliance results from notification for job %s", jobID)
 
-	jobMonitor := GetJobMonitorService()
+	jobMonitor := job.GetJobMonitorService()
 
 	// Extract notification data
 	notification, ok := notificationData.(map[string]interface{})
@@ -152,10 +153,10 @@ func processPolicyComplianceResultsFromNotification(jobID string, complianceCont
 }
 
 // processPolicyComplianceResultsFromVeloArtifact handles policy compliance processing via traditional VeloArtifact polling.
-func processPolicyComplianceResultsFromVeloArtifact(jobID string, complianceContext *PolicyComplianceJobContext, statusResp *StatusResponse) error {
+func processPolicyComplianceResultsFromVeloArtifact(jobID string, complianceContext *PolicyComplianceJobContext, statusResp *job.StatusResponse) error {
 	logger.Infof("Processing policy compliance results from VeloArtifact polling for job %s", jobID)
 
-	jobMonitor := GetJobMonitorService()
+	jobMonitor := job.GetJobMonitorService()
 
 	// Get endpoint information
 	ep, err := getEndpointForComplianceJob(jobID, complianceContext.EndpointID)

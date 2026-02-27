@@ -20,6 +20,7 @@ import (
 	"dbfartifactapi/repository"
 	"dbfartifactapi/services/agent"
 	"dbfartifactapi/services/dto"
+	"dbfartifactapi/services/job"
 	"dbfartifactapi/utils"
 
 	"gorm.io/gorm"
@@ -195,7 +196,7 @@ func (s *dbObjectMgtService) GetByDbMgtId(ctx context.Context, id uint) (string,
 	}
 
 	// Add job to monitoring system with completion callback for atomic object creation
-	jobMonitor := GetJobMonitorService()
+	jobMonitor := job.GetJobMonitorService()
 	completionCallback := CreateObjectCompletionHandler()
 	jobMonitor.AddJobWithCallback(jobResp.JobID, id, ep.ClientID, ep.OsType, completionCallback, contextData)
 
@@ -541,7 +542,7 @@ func (s *dbObjectMgtService) GetByCntMgtIdOptimized(ctx context.Context, id uint
 		"combined_object_context": combinedContext,
 	}
 
-	jobMonitor := GetJobMonitorService()
+	jobMonitor := job.GetJobMonitorService()
 	completionCallback := CreateCombinedObjectCompletionHandler()
 	jobMonitor.AddJobWithCallback(jobResp.JobID, id, ep.ClientID, ep.OsType, completionCallback, contextData)
 

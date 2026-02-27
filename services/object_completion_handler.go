@@ -13,6 +13,7 @@ import (
 	"dbfartifactapi/pkg/logger"
 	"dbfartifactapi/repository"
 	"dbfartifactapi/services/agent"
+	"dbfartifactapi/services/job"
 	"dbfartifactapi/utils"
 )
 
@@ -36,8 +37,8 @@ type ObjectResult struct {
 }
 
 // CreateObjectCompletionHandler creates a callback function for object job completion
-func CreateObjectCompletionHandler() JobCompletionCallback {
-	return func(jobID string, jobInfo *JobInfo, statusResp *StatusResponse) error {
+func CreateObjectCompletionHandler() job.JobCompletionCallback {
+	return func(jobID string, jobInfo *job.JobInfo, statusResp *job.StatusResponse) error {
 		logger.Infof("Processing object completion for job %s, status: %s", jobID, statusResp.Status)
 
 		// Extract context data from job
@@ -57,7 +58,7 @@ func CreateObjectCompletionHandler() JobCompletionCallback {
 }
 
 // processObjectResults processes the results of a completed object job
-func processObjectResults(jobID string, contextData interface{}, statusResp *StatusResponse, jobInfo *JobInfo) error {
+func processObjectResults(jobID string, contextData interface{}, statusResp *job.StatusResponse, jobInfo *job.JobInfo) error {
 	logger.Infof("Processing object results for job %s - completed: %d, failed: %d",
 		jobID, statusResp.Completed, statusResp.Failed)
 
@@ -359,10 +360,10 @@ func parseObjectTypeFromKey(queryKey string) (int, error) {
 }
 
 // processObjectResultsFromNotification handles object processing when triggered by external notification
-func processObjectResultsFromNotification(jobID string, objectContext *ObjectJobContext, notificationData interface{}, statusResp *StatusResponse) error {
+func processObjectResultsFromNotification(jobID string, objectContext *ObjectJobContext, notificationData interface{}, statusResp *job.StatusResponse) error {
 	logger.Infof("Processing object results from notification for job %s", jobID)
 
-	jobMonitor := GetJobMonitorService()
+	jobMonitor := job.GetJobMonitorService()
 
 	// Extract notification data
 	notification, ok := notificationData.(map[string]interface{})
@@ -427,10 +428,10 @@ func processObjectResultsFromNotification(jobID string, objectContext *ObjectJob
 }
 
 // processObjectResultsFromVeloArtifact handles object processing via traditional VeloArtifact polling
-func processObjectResultsFromVeloArtifact(jobID string, objectContext *ObjectJobContext, statusResp *StatusResponse) error {
+func processObjectResultsFromVeloArtifact(jobID string, objectContext *ObjectJobContext, statusResp *job.StatusResponse) error {
 	logger.Infof("Processing object results from VeloArtifact polling for job %s", jobID)
 
-	jobMonitor := GetJobMonitorService()
+	jobMonitor := job.GetJobMonitorService()
 
 	// Get endpoint information
 	ep, err := getEndpointForObjectJob(jobID, objectContext.EndpointID)
@@ -466,8 +467,8 @@ func processObjectResultsFromVeloArtifact(jobID string, objectContext *ObjectJob
 }
 
 // CreateCombinedObjectCompletionHandler creates a callback function for combined object job completion
-func CreateCombinedObjectCompletionHandler() JobCompletionCallback {
-	return func(jobID string, jobInfo *JobInfo, statusResp *StatusResponse) error {
+func CreateCombinedObjectCompletionHandler() job.JobCompletionCallback {
+	return func(jobID string, jobInfo *job.JobInfo, statusResp *job.StatusResponse) error {
 		logger.Infof("Processing combined object completion for job %s, status: %s", jobID, statusResp.Status)
 
 		// Extract context data from job
@@ -486,7 +487,7 @@ func CreateCombinedObjectCompletionHandler() JobCompletionCallback {
 }
 
 // processCombinedObjectResults processes the results of a completed combined object job
-func processCombinedObjectResults(jobID string, contextData interface{}, statusResp *StatusResponse, jobInfo *JobInfo) error {
+func processCombinedObjectResults(jobID string, contextData interface{}, statusResp *job.StatusResponse, jobInfo *job.JobInfo) error {
 	logger.Infof("Processing combined object results for job %s - completed: %d, failed: %d",
 		jobID, statusResp.Completed, statusResp.Failed)
 
@@ -714,10 +715,10 @@ func parseCombinedQueryKey(queryKey string) (uint, int, error) {
 }
 
 // processCombinedObjectResultsFromNotification handles combined object processing when triggered by external notification
-func processCombinedObjectResultsFromNotification(jobID string, combinedContext *CombinedObjectJobContext, notificationData interface{}, statusResp *StatusResponse) error {
+func processCombinedObjectResultsFromNotification(jobID string, combinedContext *CombinedObjectJobContext, notificationData interface{}, statusResp *job.StatusResponse) error {
 	logger.Infof("Processing combined object results from notification for job %s", jobID)
 
-	jobMonitor := GetJobMonitorService()
+	jobMonitor := job.GetJobMonitorService()
 
 	// Extract notification data
 	notification, ok := notificationData.(map[string]interface{})
@@ -784,10 +785,10 @@ func processCombinedObjectResultsFromNotification(jobID string, combinedContext 
 }
 
 // processCombinedObjectResultsFromVeloArtifact handles combined object processing via traditional VeloArtifact polling
-func processCombinedObjectResultsFromVeloArtifact(jobID string, combinedContext *CombinedObjectJobContext, statusResp *StatusResponse) error {
+func processCombinedObjectResultsFromVeloArtifact(jobID string, combinedContext *CombinedObjectJobContext, statusResp *job.StatusResponse) error {
 	logger.Infof("Processing combined object results from VeloArtifact polling for job %s", jobID)
 
-	jobMonitor := GetJobMonitorService()
+	jobMonitor := job.GetJobMonitorService()
 
 	// Get endpoint information
 	ep, err := getEndpointForObjectJob(jobID, combinedContext.EndpointID)

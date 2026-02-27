@@ -10,6 +10,7 @@ import (
 	"dbfartifactapi/repository"
 	"dbfartifactapi/services/agent"
 	"dbfartifactapi/services/dto"
+	"dbfartifactapi/services/job"
 	"dbfartifactapi/utils"
 )
 
@@ -129,7 +130,7 @@ func (s *policyComplianceService) StartCheck(ctx context.Context, cntMgtID uint)
 	}
 
 	// Add job to monitoring system with completion callback
-	jobMonitor := GetJobMonitorService()
+	jobMonitor := job.GetJobMonitorService()
 	completionCallback := CreatePolicyComplianceCompletionHandler()
 	jobMonitor.AddJobWithCallback(jobResp.JobID, cntMgtID, ep.ClientID, ep.OsType, completionCallback, contextData)
 

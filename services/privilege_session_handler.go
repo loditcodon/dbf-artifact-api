@@ -16,6 +16,7 @@ import (
 	"dbfartifactapi/models"
 	"dbfartifactapi/pkg/logger"
 	"dbfartifactapi/repository"
+	"dbfartifactapi/services/job"
 	"dbfartifactapi/utils"
 
 	"gorm.io/gorm"
@@ -526,8 +527,8 @@ actorLoop:
 }
 
 // CreatePrivilegeSessionCompletionHandler creates callback for privilege session job completion
-func CreatePrivilegeSessionCompletionHandler() JobCompletionCallback {
-	return func(jobID string, jobInfo *JobInfo, statusResp *StatusResponse) error {
+func CreatePrivilegeSessionCompletionHandler() job.JobCompletionCallback {
+	return func(jobID string, jobInfo *job.JobInfo, statusResp *job.StatusResponse) error {
 		logger.Infof("Processing privilege session completion for job %s, status: %s", jobID, statusResp.Status)
 
 		// Extract context data from job
@@ -547,7 +548,7 @@ func CreatePrivilegeSessionCompletionHandler() JobCompletionCallback {
 }
 
 // processPrivilegeSessionResults processes the results of privilege data loading job
-func processPrivilegeSessionResults(jobID string, contextData interface{}, statusResp *StatusResponse, jobInfo *JobInfo) error {
+func processPrivilegeSessionResults(jobID string, contextData interface{}, statusResp *job.StatusResponse, jobInfo *job.JobInfo) error {
 	logger.Infof("Processing privilege session results for job %s - completed: %d, failed: %d",
 		jobID, statusResp.Completed, statusResp.Failed)
 
@@ -567,10 +568,10 @@ func processPrivilegeSessionResults(jobID string, contextData interface{}, statu
 }
 
 // processPrivilegeSessionFromNotification handles privilege session processing from notification
-func processPrivilegeSessionFromNotification(jobID string, sessionContext *PrivilegeSessionJobContext, notificationData interface{}, statusResp *StatusResponse) error {
+func processPrivilegeSessionFromNotification(jobID string, sessionContext *PrivilegeSessionJobContext, notificationData interface{}, statusResp *job.StatusResponse) error {
 	logger.Infof("Processing privilege session from notification for job %s", jobID)
 
-	jobMonitor := GetJobMonitorService()
+	jobMonitor := job.GetJobMonitorService()
 
 	// Extract notification data
 	notification, ok := notificationData.(map[string]interface{})
@@ -635,10 +636,10 @@ func processPrivilegeSessionFromNotification(jobID string, sessionContext *Privi
 }
 
 // processPrivilegeSessionFromVeloArtifact handles privilege session processing via VeloArtifact polling
-func processPrivilegeSessionFromVeloArtifact(jobID string, sessionContext *PrivilegeSessionJobContext, statusResp *StatusResponse) error {
+func processPrivilegeSessionFromVeloArtifact(jobID string, sessionContext *PrivilegeSessionJobContext, statusResp *job.StatusResponse) error {
 	logger.Infof("Processing privilege session from VeloArtifact polling for job %s", jobID)
 
-	jobMonitor := GetJobMonitorService()
+	jobMonitor := job.GetJobMonitorService()
 
 	// Get endpoint information
 	ep, err := getEndpointForJob(jobID, sessionContext.EndpointID)

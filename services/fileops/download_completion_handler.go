@@ -5,7 +5,7 @@ import (
 	"os"
 
 	"dbfartifactapi/pkg/logger"
-	"dbfartifactapi/services"
+	"dbfartifactapi/services/job"
 )
 
 // DownloadJobContext holds context data for download job completion processing.
@@ -17,8 +17,8 @@ type DownloadJobContext struct {
 
 // CreateDownloadCompletionHandler creates a callback function for download job completion.
 // Cleans up temporary compressed archive file after job completes and marks job as done.
-func CreateDownloadCompletionHandler() services.JobCompletionCallback {
-	return func(jobID string, jobInfo *services.JobInfo, statusResp *services.StatusResponse) error {
+func CreateDownloadCompletionHandler() job.JobCompletionCallback {
+	return func(jobID string, jobInfo *job.JobInfo, statusResp *job.StatusResponse) error {
 		logger.Infof("Processing download completion for job %s, status: %s", jobID, statusResp.Status)
 
 		contextData, ok := jobInfo.ContextData["download_context"]
@@ -51,8 +51,8 @@ func CreateDownloadCompletionHandler() services.JobCompletionCallback {
 }
 
 // finalizeDownloadJob marks the download job as completed or failed based on client status.
-func finalizeDownloadJob(jobID string, statusResp *services.StatusResponse) error {
-	jobMonitor := services.GetJobMonitorService()
+func finalizeDownloadJob(jobID string, statusResp *job.StatusResponse) error {
+	jobMonitor := job.GetJobMonitorService()
 
 	if statusResp.Status == "completed" {
 		message := fmt.Sprintf("Download completed successfully: %s", statusResp.Message)

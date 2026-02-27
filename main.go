@@ -13,6 +13,7 @@ import (
 	"dbfartifactapi/pkg/logger"
 	"dbfartifactapi/services"
 	"dbfartifactapi/services/fileops"
+	"dbfartifactapi/services/job"
 	"dbfartifactapi/services/session"
 	"dbfartifactapi/utils"
 
@@ -109,7 +110,7 @@ func main() {
 		logger.Infof("Received shutdown signal, stopping job monitor service...")
 
 		// Stop job monitor service
-		jobMonitor := services.GetJobMonitorService()
+		jobMonitor := job.GetJobMonitorService()
 		jobMonitor.Stop()
 
 		logger.Infof("Application shutdown complete")

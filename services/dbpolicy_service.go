@@ -18,6 +18,7 @@ import (
 	"dbfartifactapi/repository"
 	"dbfartifactapi/services/agent"
 	"dbfartifactapi/services/dto"
+	"dbfartifactapi/services/job"
 
 	"dbfartifactapi/utils"
 
@@ -643,7 +644,7 @@ func (s *dbPolicyService) GetByCntMgtWithPrivilegeSession(ctx context.Context, i
 	}
 
 	// Register job with monitoring system
-	jobMonitor := GetJobMonitorService()
+	jobMonitor := job.GetJobMonitorService()
 	completionCallback := CreatePrivilegeSessionCompletionHandler()
 	jobMonitor.AddJobWithCallback(jobResp.JobID, id, ep.ClientID, ep.OsType, completionCallback, contextData)
 
@@ -783,7 +784,7 @@ func (s *dbPolicyService) GetByCntMgtWithOraclePrivilegeSession(ctx context.Cont
 	}
 
 	// Register job with monitoring system
-	jobMonitor := GetJobMonitorService()
+	jobMonitor := job.GetJobMonitorService()
 	completionCallback := CreateOraclePrivilegeSessionCompletionHandler()
 	jobMonitor.AddJobWithCallback(jobResp.JobID, id, ep.ClientID, ep.OsType, completionCallback, contextData)
 
@@ -1111,7 +1112,7 @@ func (s *dbPolicyService) BulkUpdatePoliciesByActor(ctx context.Context, req dto
 	}
 
 	// Add job to monitoring system with completion callback
-	jobMonitor := GetJobMonitorService()
+	jobMonitor := job.GetJobMonitorService()
 	completionCallback := CreateBulkPolicyUpdateCompletionHandler()
 	jobMonitor.AddJobWithCallback(jobResp.JobID, req.DBMgtID, ep.ClientID, ep.OsType, completionCallback, contextData)
 

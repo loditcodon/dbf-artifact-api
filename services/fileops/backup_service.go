@@ -10,9 +10,9 @@ import (
 	"dbfartifactapi/models"
 	"dbfartifactapi/pkg/logger"
 	"dbfartifactapi/repository"
-	"dbfartifactapi/services"
 	"dbfartifactapi/services/agent"
 	"dbfartifactapi/services/dto"
+	"dbfartifactapi/services/job"
 	"dbfartifactapi/utils"
 )
 
@@ -223,7 +223,7 @@ func (s *backupService) ExecuteBackup(ctx context.Context, req models.BackupRequ
 		contextData["completed_steps"] = len(sqlStepResults)
 		contextData["master_job_id"] = masterJobID
 
-		jobMonitor := services.GetJobMonitorService()
+		jobMonitor := job.GetJobMonitorService()
 
 		// If only SQL steps (no OS jobs), mark job completed immediately
 		if len(osJobIDs) == 0 {
@@ -316,7 +316,7 @@ func (s *backupService) ExecuteBackup(ctx context.Context, req models.BackupRequ
 		contextData["os_job_ids"] = osJobIDs
 		contextData["master_job_id"] = masterJobID
 
-		jobMonitor := services.GetJobMonitorService()
+		jobMonitor := job.GetJobMonitorService()
 		completionCallback := CreateBackupCompletionHandler()
 		jobMonitor.AddJobWithCallback(masterJobID, req.JobID, ep.ClientID, ep.OsType, completionCallback, contextData)
 
@@ -397,7 +397,7 @@ func (s *backupService) ExecuteBackup(ctx context.Context, req models.BackupRequ
 		contextData["completed_steps"] = len(sqlStepResults)
 
 		// Add job to monitoring and mark completed immediately
-		jobMonitor := services.GetJobMonitorService()
+		jobMonitor := job.GetJobMonitorService()
 		completionCallback := CreateBackupCompletionHandler()
 		jobMonitor.AddJobWithCallback(masterJobID, req.JobID, ep.ClientID, ep.OsType, completionCallback, contextData)
 

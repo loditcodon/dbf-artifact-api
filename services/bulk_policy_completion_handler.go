@@ -10,13 +10,14 @@ import (
 	"dbfartifactapi/pkg/logger"
 	"dbfartifactapi/repository"
 	"dbfartifactapi/services/dto"
+	"dbfartifactapi/services/job"
 	"dbfartifactapi/utils"
 )
 
 // CreateBulkPolicyUpdateCompletionHandler creates a callback function for bulk policy update job completion
 // Processes VeloArtifact results and atomically updates database with policy changes
-func CreateBulkPolicyUpdateCompletionHandler() JobCompletionCallback {
-	return func(jobID string, jobInfo *JobInfo, statusResp *StatusResponse) error {
+func CreateBulkPolicyUpdateCompletionHandler() job.JobCompletionCallback {
+	return func(jobID string, jobInfo *job.JobInfo, statusResp *job.StatusResponse) error {
 		logger.Infof("Processing bulk policy update completion for job %s, status: %s", jobID, statusResp.Status)
 
 		// Extract context data from job
@@ -36,7 +37,7 @@ func CreateBulkPolicyUpdateCompletionHandler() JobCompletionCallback {
 }
 
 // processBulkPolicyUpdateResults processes the results of a completed bulk policy update job
-func processBulkPolicyUpdateResults(jobID string, contextData interface{}, statusResp *StatusResponse, jobInfo *JobInfo) error {
+func processBulkPolicyUpdateResults(jobID string, contextData interface{}, statusResp *job.StatusResponse, jobInfo *job.JobInfo) error {
 	logger.Infof("Processing bulk policy update results for job %s - completed: %d, failed: %d",
 		jobID, statusResp.Completed, statusResp.Failed)
 
@@ -56,7 +57,7 @@ func processBulkPolicyUpdateResults(jobID string, contextData interface{}, statu
 }
 
 // processBulkPolicyUpdateResultsFromNotification handles bulk policy update processing when triggered by external notification
-func processBulkPolicyUpdateResultsFromNotification(jobID string, bulkContext *dto.BulkPolicyUpdateJobContext, notificationData interface{}, statusResp *StatusResponse) error {
+func processBulkPolicyUpdateResultsFromNotification(jobID string, bulkContext *dto.BulkPolicyUpdateJobContext, notificationData interface{}, statusResp *job.StatusResponse) error {
 	logger.Infof("Processing bulk policy update results from notification for job %s", jobID)
 
 	// Extract notification data
@@ -106,7 +107,7 @@ func processBulkPolicyUpdateResultsFromNotification(jobID string, bulkContext *d
 }
 
 // processBulkPolicyUpdateResultsFromVeloArtifact handles bulk policy update processing via traditional VeloArtifact polling
-func processBulkPolicyUpdateResultsFromVeloArtifact(jobID string, bulkContext *dto.BulkPolicyUpdateJobContext, statusResp *StatusResponse) error {
+func processBulkPolicyUpdateResultsFromVeloArtifact(jobID string, bulkContext *dto.BulkPolicyUpdateJobContext, statusResp *job.StatusResponse) error {
 	logger.Infof("Processing bulk policy update results from VeloArtifact polling for job %s", jobID)
 
 	// Get endpoint information

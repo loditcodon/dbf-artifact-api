@@ -9,8 +9,8 @@ import (
 	"dbfartifactapi/models"
 	"dbfartifactapi/pkg/logger"
 	"dbfartifactapi/repository"
-	"dbfartifactapi/services"
 	"dbfartifactapi/services/agent"
+	"dbfartifactapi/services/job"
 	"dbfartifactapi/utils"
 )
 
@@ -123,7 +123,7 @@ func (s *uploadService) ExecuteUpload(ctx context.Context, req models.UploadRequ
 			SourceJobID: req.SourceJobID,
 		},
 	}
-	jobMonitor := services.GetJobMonitorService()
+	jobMonitor := job.GetJobMonitorService()
 	jobMonitor.AddJobWithCallback(jobResp.JobID, 0, ep.ClientID, ep.OsType, completionCallback, contextData)
 
 	logger.Infof("Upload job started successfully: job_id=%s", jobResp.JobID)

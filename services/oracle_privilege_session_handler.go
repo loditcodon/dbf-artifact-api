@@ -15,6 +15,7 @@ import (
 	"dbfartifactapi/models"
 	"dbfartifactapi/pkg/logger"
 	"dbfartifactapi/repository"
+	"dbfartifactapi/services/job"
 	"dbfartifactapi/utils"
 
 	"gorm.io/gorm"
@@ -25,8 +26,8 @@ var processedOraclePrivilegeJobs sync.Map
 
 // CreateOraclePrivilegeSessionCompletionHandler creates callback for Oracle privilege session job completion.
 // Handles both notification-based and VeloArtifact polling completion flows.
-func CreateOraclePrivilegeSessionCompletionHandler() JobCompletionCallback {
-	return func(jobID string, jobInfo *JobInfo, statusResp *StatusResponse) error {
+func CreateOraclePrivilegeSessionCompletionHandler() job.JobCompletionCallback {
+	return func(jobID string, jobInfo *job.JobInfo, statusResp *job.StatusResponse) error {
 		logger.Infof("Processing Oracle privilege session completion for job %s, status: %s", jobID, statusResp.Status)
 
 		// Extract context data from job
@@ -47,7 +48,7 @@ func CreateOraclePrivilegeSessionCompletionHandler() JobCompletionCallback {
 
 // processOraclePrivilegeSessionResults processes the results of Oracle privilege data loading job.
 // Routes to notification-based or VeloArtifact polling processing based on context.
-func processOraclePrivilegeSessionResults(jobID string, contextData interface{}, statusResp *StatusResponse, jobInfo *JobInfo) error {
+func processOraclePrivilegeSessionResults(jobID string, contextData interface{}, statusResp *job.StatusResponse, jobInfo *job.JobInfo) error {
 	logger.Infof("Processing Oracle privilege session results for job %s - completed: %d, failed: %d",
 		jobID, statusResp.Completed, statusResp.Failed)
 
@@ -67,10 +68,10 @@ func processOraclePrivilegeSessionResults(jobID string, contextData interface{},
 }
 
 // processOraclePrivilegeSessionFromNotification handles Oracle privilege session processing from notification.
-func processOraclePrivilegeSessionFromNotification(jobID string, sessionContext *OraclePrivilegeSessionJobContext, notificationData interface{}, statusResp *StatusResponse) error {
+func processOraclePrivilegeSessionFromNotification(jobID string, sessionContext *OraclePrivilegeSessionJobContext, notificationData interface{}, statusResp *job.StatusResponse) error {
 	logger.Infof("Processing Oracle privilege session from notification for job %s", jobID)
 
-	jobMonitor := GetJobMonitorService()
+	jobMonitor := job.GetJobMonitorService()
 
 	// Extract notification data
 	notification, ok := notificationData.(map[string]interface{})
@@ -135,10 +136,10 @@ func processOraclePrivilegeSessionFromNotification(jobID string, sessionContext 
 }
 
 // processOraclePrivilegeSessionFromVeloArtifact handles Oracle privilege session processing via VeloArtifact polling.
-func processOraclePrivilegeSessionFromVeloArtifact(jobID string, sessionContext *OraclePrivilegeSessionJobContext, statusResp *StatusResponse) error {
+func processOraclePrivilegeSessionFromVeloArtifact(jobID string, sessionContext *OraclePrivilegeSessionJobContext, statusResp *job.StatusResponse) error {
 	logger.Infof("Processing Oracle privilege session from VeloArtifact polling for job %s", jobID)
 
-	jobMonitor := GetJobMonitorService()
+	jobMonitor := job.GetJobMonitorService()
 
 	// Get endpoint information
 	ep, err := getEndpointForJob(jobID, sessionContext.EndpointID)

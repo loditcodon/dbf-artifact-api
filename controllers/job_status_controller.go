@@ -6,20 +6,20 @@ import (
 	"strconv"
 
 	"dbfartifactapi/pkg/logger"
-	"dbfartifactapi/services"
+	"dbfartifactapi/services/job"
 
 	"github.com/gin-gonic/gin"
 )
 
 // JobStatusController handles job status API endpoints
 type JobStatusController struct {
-	jobMonitor *services.JobMonitorService
+	jobMonitor *job.JobMonitorService
 }
 
 // NewJobStatusController creates a new JobStatusController
 func NewJobStatusController() *JobStatusController {
 	return &JobStatusController{
-		jobMonitor: services.GetJobMonitorService(),
+		jobMonitor: job.GetJobMonitorService(),
 	}
 }
 
