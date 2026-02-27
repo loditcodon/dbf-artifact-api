@@ -1,4 +1,4 @@
-package services
+package policy
 
 import (
 	"bytes"

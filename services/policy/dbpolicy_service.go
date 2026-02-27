@@ -1,4 +1,4 @@
-package services
+package policy
 
 import (
 	"bytes"
@@ -28,19 +28,19 @@ import (
 	"gorm.io/gorm"
 )
 
-// policyInput represents processed policy template data
-type policyInput struct {
-	policydf models.DBPolicyDefault
-	actorId  uint
-	objectId int
-	dbmgtId  int    // Database management ID, -1 for all databases
-	finalSQL string // Store the processed SQL to avoid re-processing
+// PolicyInput represents processed policy template data
+type PolicyInput struct {
+	Policydf models.DBPolicyDefault
+	ActorId  uint
+	ObjectId int
+	DbmgtId  int    // Database management ID, -1 for all databases
+	FinalSQL string // Store the processed SQL to avoid re-processing
 }
 
 // PolicyJobContext contains context data needed for policy creation callback
 type PolicyJobContext struct {
 	DBMgtID     uint
-	SqlFinalMap map[string]policyInput
+	SqlFinalMap map[string]PolicyInput
 	DBMgt       *models.DBMgt
 	CMT         *models.CntMgt
 	EndpointID  uint
@@ -52,7 +52,7 @@ type CombinedPolicyJobContext struct {
 	DbMgts     []models.DBMgt                  `json:"db_mgts"`
 	CMT        *models.CntMgt                  `json:"cmt"`
 	EndpointID uint                            `json:"endpoint_id"`
-	DbQueries  map[uint]map[string]policyInput `json:"db_queries"` // dbmgt_id -> queries
+	DbQueries  map[uint]map[string]PolicyInput `json:"db_queries"` // dbmgt_id -> queries
 }
 
 // DBPolicyService provides business logic for database policy operations and VeloArtifact execution.
@@ -75,33 +75,6 @@ type dbPolicyService struct {
 	dbObjectMgtRepo        repository.DBObjectMgtRepository
 	endpointRepo           repository.EndpointRepository
 	DBPolicyDefaultsAllMap map[uint]models.DBPolicyDefault
-}
-
-func init() {
-	// Register privilege package dependencies to break circular import
-	privilege.RegisterNewPolicyEvaluator(func() privilege.PolicyEvaluator {
-		return NewDBPolicyService().(*dbPolicyService)
-	})
-	privilege.RegisterRetrieveJobResults(func(jobID string, ep *models.Endpoint) ([]privilege.QueryResult, error) {
-		results, err := retrieveJobResults(jobID, ep)
-		if err != nil {
-			return nil, err
-		}
-		// Convert internal QueryResult to privilege.QueryResult
-		out := make([]privilege.QueryResult, len(results))
-		for i, r := range results {
-			out[i] = privilege.QueryResult{
-				QueryKey:    r.QueryKey,
-				Query:       r.Query,
-				Status:      r.Status,
-				Result:      r.Result,
-				ExecuteTime: r.ExecuteTime,
-				DurationMs:  r.DurationMs,
-			}
-		}
-		return out, nil
-	})
-	privilege.RegisterGetEndpointForJob(getEndpointForJob)
 }
 
 // NewDBPolicyService creates a new database policy service instance.
@@ -384,8 +357,8 @@ func (s *dbPolicyService) executePolicyUpdateSql(ctx context.Context, sqlcmd str
 
 	// Oracle CDB/PDB scope substitution: CDB→"*", PDB→"PDB"
 	if strings.ToLower(cmt.CntType) == "oracle" {
-		connType := GetOracleConnectionType(cmt)
-		executeSql = strings.ReplaceAll(executeSql, "${scope}", GetObjectTypeWildcard(connType))
+		connType := privoracle.GetOracleConnectionType(cmt)
+		executeSql = strings.ReplaceAll(executeSql, "${scope}", privoracle.GetObjectTypeWildcard(connType))
 	}
 
 	queryParamBuilder := dto.NewDBQueryParamBuilder().
@@ -533,7 +506,6 @@ func (s *dbPolicyService) getDBMgts(tx *gorm.DB, cntID uint) ([]*models.DBMgt, e
 		return nil, fmt.Errorf("failed to get dbmgt records for cntid=%d: %w", cntID, err)
 	}
 
-	// logger.Debugf("Retrieved %d database records for cntid=%d", len(dbMgts), cntID)
 	return dbMgts, nil
 }
 
@@ -544,7 +516,6 @@ func (s *dbPolicyService) getDBActorMgts(tx *gorm.DB, cntID uint) ([]*models.DBA
 		return nil, fmt.Errorf("failed to get dbactormgt records for cntid=%d: %w", cntID, err)
 	}
 
-	// logger.Debugf("Retrieved %d actor records for cntid=%d", len(dbActorMgts), cntID)
 	return dbActorMgts, nil
 }
 
@@ -722,7 +693,7 @@ func (s *dbPolicyService) GetByCntMgtWithOraclePrivilegeSession(ctx context.Cont
 	logger.Infof("Found %d Oracle actors for cntmgt_id=%d", len(dbActorMgts), id)
 
 	// Determine Oracle connection type (CDB or PDB)
-	connType := GetOracleConnectionType(cmt)
+	connType := privoracle.GetOracleConnectionType(cmt)
 	logger.Infof("Oracle connection type: %s for cntmgt_id=%d", connType.String(), id)
 
 	// Build Oracle privilege data queries (dbActorMgts and dbmgts are already []models.* value slices)
@@ -825,9 +796,6 @@ func (s *dbPolicyService) GetByCntMgtWithOraclePrivilegeSession(ctx context.Cont
 		jobResp.JobID, len(dbmgts), connType.String()), nil
 }
 
-// processGeneralTemplatesWithSession executes general SQL templates against in-memory privilege session
-// Mirrors processGeneralSQLTemplates logic but uses in-memory session instead of building queries
-
 // extractResultValue extracts first value from query result
 // Returns "NULL" if result is empty or first value is nil
 func (s *dbPolicyService) extractResultValue(result []map[string]interface{}) string {
@@ -846,9 +814,9 @@ func (s *dbPolicyService) extractResultValue(result []map[string]interface{}) st
 	return "NULL"
 }
 
-// isPolicyAllowed checks if query result matches allow/deny criteria
+// isPolicyAllowedInternal checks if query result matches allow/deny criteria
 // Matches logic from policy_completion_handler.go processQueryResult and isPolicyAllowed
-func (s *dbPolicyService) isPolicyAllowed(output, resAllow, resDeny string) bool {
+func (s *dbPolicyService) isPolicyAllowedInternal(output, resAllow, resDeny string) bool {
 	if output == resDeny {
 		return false
 	}
@@ -864,7 +832,7 @@ func (s *dbPolicyService) isPolicyAllowed(output, resAllow, resDeny string) bool
 
 // IsPolicyAllowed implements privilege.PolicyEvaluator interface.
 func (s *dbPolicyService) IsPolicyAllowed(output, resAllow, resDeny string) bool {
-	return s.isPolicyAllowed(output, resAllow, resDeny)
+	return s.isPolicyAllowedInternal(output, resAllow, resDeny)
 }
 
 // ExtractResultValue implements privilege.PolicyEvaluator interface.
@@ -906,14 +874,6 @@ func (s *dbPolicyService) buildPrivilegeDataQueries(actors []models.DBActorMgt, 
 
 	// Build privilege data queries with explicit column ordering
 	queries := map[string][]string{
-		// "mysql.user": {
-		// 	fmt.Sprintf(`SELECT Host, User, Select_priv, Insert_priv, Update_priv, Delete_priv, Create_priv, Drop_priv,
-		// 		Reload_priv, Shutdown_priv, Process_priv, File_priv, Grant_priv, References_priv, Index_priv, Alter_priv,
-		// 		Show_db_priv, Super_priv, Create_tmp_table_priv, Lock_tables_priv, Execute_priv, Repl_slave_priv,
-		// 		Repl_client_priv, Create_view_priv, Show_view_priv, Create_routine_priv, Alter_routine_priv,
-		// 		Create_user_priv, Event_priv, Trigger_priv, Create_tablespace_priv, Create_role_priv, Resource_group_admin_priv
-		// 		FROM mysql.user WHERE (User, Host) IN (%s)`, actorFilter),
-		// },
 		// REMOVE Resource_group_admin_priv for MySQL 5.7 compatibility
 		// Will need to handle version differences if supporting both MySQL 5.7 and 8.0+
 		// For now, assume MySQL 5.7 compatibility
@@ -1258,8 +1218,8 @@ func (s *dbPolicyService) buildBulkPolicyCommands(
 	// Oracle CDB/PDB scope substitution: CDB→"*", PDB→"PDB"
 	var oracleScope string
 	if strings.ToLower(cmt.CntType) == "oracle" {
-		connType := GetOracleConnectionType(cmt)
-		oracleScope = GetObjectTypeWildcard(connType)
+		connType := privoracle.GetOracleConnectionType(cmt)
+		oracleScope = privoracle.GetObjectTypeWildcard(connType)
 	}
 
 	// Build REVOKE commands for policies to remove

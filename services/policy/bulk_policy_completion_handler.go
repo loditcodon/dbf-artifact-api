@@ -1,4 +1,4 @@
-package services
+package policy
 
 import (
 	"fmt"
@@ -88,7 +88,7 @@ func processBulkPolicyUpdateResultsFromNotification(jobID string, bulkContext *d
 	logger.Infof("Processing bulk policy update results from notification file: %s", localFilePath)
 
 	// Read and parse the already downloaded file
-	resultsData, err := parseResultsFile(localFilePath)
+	resultsData, err := ParseResultsFile(localFilePath)
 	if err != nil {
 		return fmt.Errorf("failed to parse notification results file for job %s: %v", jobID, err)
 	}
@@ -111,13 +111,13 @@ func processBulkPolicyUpdateResultsFromVeloArtifact(jobID string, bulkContext *d
 	logger.Infof("Processing bulk policy update results from VeloArtifact polling for job %s", jobID)
 
 	// Get endpoint information
-	ep, err := getEndpointForJob(jobID, bulkContext.EndpointID)
+	ep, err := GetEndpointForJob(jobID, bulkContext.EndpointID)
 	if err != nil {
 		return err
 	}
 
 	// Retrieve and download results file via VeloArtifact
-	resultsData, err := retrieveJobResults(jobID, ep)
+	resultsData, err := RetrieveJobResults(jobID, ep)
 	if err != nil {
 		return err
 	}

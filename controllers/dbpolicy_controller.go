@@ -7,17 +7,17 @@ import (
 
 	"dbfartifactapi/models"
 	"dbfartifactapi/pkg/logger"
-	"dbfartifactapi/services"
 	"dbfartifactapi/services/dto"
+	"dbfartifactapi/services/policy"
 	"dbfartifactapi/utils"
 
 	"github.com/gin-gonic/gin"
 )
 
-var dbPolicySrv = services.NewDBPolicyService()
+var dbPolicySrv = policy.NewDBPolicyService()
 
 // SetDBPolicyService initializes the database policy service instance.
-func SetDBPolicyService(srv services.DBPolicyService) {
+func SetDBPolicyService(srv policy.DBPolicyService) {
 	dbPolicySrv = srv
 }
 

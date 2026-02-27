@@ -1,4 +1,4 @@
-package services
+package policy
 
 import (
 	"encoding/json"
@@ -18,8 +18,6 @@ import (
 
 	"gorm.io/gorm"
 )
-
-// PolicyJobContext and policyInput are defined in dbpolicy_service.go to avoid circular imports
 
 // GetResultsResponse represents the response from getresults command
 type GetResultsResponse struct {
@@ -104,7 +102,7 @@ func processPolicyResultsFromNotification(jobID string, policyContext *PolicyJob
 	logger.Infof("Processing policy results from notification file: %s", localFilePath)
 
 	// Read and parse the already downloaded file
-	resultsData, err := parseResultsFile(localFilePath)
+	resultsData, err := ParseResultsFile(localFilePath)
 	if err != nil {
 		return fmt.Errorf("failed to parse notification results file for job %s: %v", jobID, err)
 	}
@@ -126,13 +124,13 @@ func processPolicyResultsFromVeloArtifact(jobID string, policyContext *PolicyJob
 	logger.Infof("Processing policy results from VeloArtifact polling for job %s", jobID)
 
 	// Get endpoint information
-	ep, err := getEndpointForJob(jobID, policyContext.EndpointID)
+	ep, err := GetEndpointForJob(jobID, policyContext.EndpointID)
 	if err != nil {
 		return err
 	}
 
 	// Retrieve and download results file via VeloArtifact
-	resultsData, err := retrieveJobResults(jobID, ep)
+	resultsData, err := RetrieveJobResults(jobID, ep)
 	if err != nil {
 		return err
 	}
@@ -159,8 +157,8 @@ type QueryResult struct {
 	DurationMs  int             `json:"duration_ms"`
 }
 
-// parseResultsFile reads and parses the downloaded JSON results file
-func parseResultsFile(filePath string) ([]QueryResult, error) {
+// ParseResultsFile reads and parses the downloaded JSON results file
+func ParseResultsFile(filePath string) ([]QueryResult, error) {
 	logger.Debugf("Reading results file: %s", filePath)
 
 	// Read file content
@@ -179,8 +177,8 @@ func parseResultsFile(filePath string) ([]QueryResult, error) {
 	return resultsData, nil
 }
 
-// getEndpointForJob retrieves endpoint information for a specific job
-func getEndpointForJob(jobID string, endpointID uint) (*models.Endpoint, error) {
+// GetEndpointForJob retrieves endpoint information for a specific job
+func GetEndpointForJob(jobID string, endpointID uint) (*models.Endpoint, error) {
 	endpointRepo := repository.NewEndpointRepository()
 	ep, err := endpointRepo.GetByID(nil, endpointID)
 	if err != nil {
@@ -190,8 +188,8 @@ func getEndpointForJob(jobID string, endpointID uint) (*models.Endpoint, error) 
 	return ep, nil
 }
 
-// retrieveJobResults gets results from VeloArtifact and downloads the results file
-func retrieveJobResults(jobID string, ep *models.Endpoint) ([]QueryResult, error) {
+// RetrieveJobResults gets results from VeloArtifact and downloads the results file
+func RetrieveJobResults(jobID string, ep *models.Endpoint) ([]QueryResult, error) {
 	// Get results from agent using getresults command
 	resultsOutput, err := agent.ExecuteAgentAPISimpleCommand(ep.ClientID, ep.OsType, "getresults", jobID, "", true)
 	if err != nil {
@@ -226,7 +224,7 @@ func retrieveJobResults(jobID string, ep *models.Endpoint) ([]QueryResult, error
 	logger.Infof("Policy results file downloaded: path=%s, size=%d bytes, md5=%s", localFilePath, downloadResp.Size, downloadResp.Md5)
 
 	// Read and parse the downloaded JSON results file
-	resultsData, err := parseResultsFile(localFilePath)
+	resultsData, err := ParseResultsFile(localFilePath)
 	if err != nil {
 		logger.Errorf("Failed to parse results file for job %s: %v", jobID, err)
 		return nil, fmt.Errorf("failed to parse results file: %v", err)
@@ -282,7 +280,6 @@ func createPoliciesFromResults(jobID string, policyContext *PolicyJobContext, re
 	// First pass: Process wildcard objects (Object:-1) to identify allowed policies
 	for _, result := range resultsData {
 		if result.Status != "success" {
-			// logger.Debugf("Skipping failed query result: %s", result.QueryKey)
 			continue
 		}
 
@@ -307,7 +304,7 @@ func createPoliciesFromResults(jobID string, policyContext *PolicyJobContext, re
 
 		// Process query result and determine policy action
 		output := processQueryResult(result.Result)
-		policyDefault := policyData.policydf
+		policyDefault := policyData.Policydf
 		resAllow := policyDefault.SqlGetAllow
 		resDeny := policyDefault.SqlGetDeny
 
@@ -323,7 +320,7 @@ func createPoliciesFromResults(jobID string, policyContext *PolicyJobContext, re
 			// Check for existing policy to prevent duplicates
 			var existingPolicy models.DBPolicy
 			err := tx.Where("dbmgt_id = ? AND actor_id = ? AND object_id = ? AND dbpolicydefault_id = ?",
-				policyContext.DBMgtID, policyData.actorId, policyData.objectId, policyDefault.ID).First(&existingPolicy).Error
+				policyContext.DBMgtID, policyData.ActorId, policyData.ObjectId, policyDefault.ID).First(&existingPolicy).Error
 
 			if err == nil {
 				// Policy already exists, skip creation
@@ -340,8 +337,8 @@ func createPoliciesFromResults(jobID string, policyContext *PolicyJobContext, re
 				CntMgt:          dbmgt.CntID,
 				DBPolicyDefault: policyDefault.ID,
 				DBMgt:           utils.MustUintToInt(policyContext.DBMgtID),
-				DBActorMgt:      policyData.actorId,
-				DBObjectMgt:     policyData.objectId,
+				DBActorMgt:      policyData.ActorId,
+				DBObjectMgt:     policyData.ObjectId,
 				Status:          "enabled",
 				Description:     "Auto-collected from V2-DBF Agent",
 			}
@@ -385,20 +382,18 @@ func createPoliciesFromResults(jobID string, policyContext *PolicyJobContext, re
 		// Check if this actor+policy already has wildcard permission
 		actorPolicyKey := fmt.Sprintf("Actor:%d-PolicyDf:%d", actorID, policyDfID)
 		if allowedActorPolicies[actorPolicyKey] {
-			// logger.Debugf("Skipping specific object for %s - wildcard already allowed", result.QueryKey)
 			continue
 		}
 
 		// Get policy input from context using unique key
 		policyData, exists := getPolicyDataFromContext(result.QueryKey, policyContext.SqlFinalMap)
 		if !exists {
-			// logger.Warnf("Policy data not found for query key: %s", result.QueryKey)
 			continue
 		}
 
 		// Process query result
 		output := processQueryResult(result.Result)
-		policyDefault := policyData.policydf
+		policyDefault := policyData.Policydf
 		resAllow := policyDefault.SqlGetAllow
 		resDeny := policyDefault.SqlGetDeny
 
@@ -406,7 +401,7 @@ func createPoliciesFromResults(jobID string, policyContext *PolicyJobContext, re
 			// Check for existing policy to prevent duplicates
 			var existingPolicy models.DBPolicy
 			err := tx.Where("dbmgt_id = ? AND actor_id = ? AND object_id = ? AND dbpolicydefault_id = ?",
-				policyContext.DBMgtID, policyData.actorId, policyData.objectId, policyDefault.ID).First(&existingPolicy).Error
+				policyContext.DBMgtID, policyData.ActorId, policyData.ObjectId, policyDefault.ID).First(&existingPolicy).Error
 
 			if err == nil {
 				// Policy already exists, skip creation
@@ -423,8 +418,8 @@ func createPoliciesFromResults(jobID string, policyContext *PolicyJobContext, re
 				CntMgt:          dbmgt.CntID,
 				DBPolicyDefault: policyDefault.ID,
 				DBMgt:           utils.MustUintToInt(policyContext.DBMgtID),
-				DBActorMgt:      policyData.actorId,
-				DBObjectMgt:     policyData.objectId,
+				DBActorMgt:      policyData.ActorId,
+				DBObjectMgt:     policyData.ObjectId,
 				Status:          "enabled",
 				Description:     "Auto-collected from V2-DBF Agent",
 			}
@@ -593,7 +588,7 @@ func parseUniqueQueryKey(queryKey string) (actorID uint, objectID int, policyDfI
 
 // getPolicyDataFromContext finds policy data using unique key lookup instead of SQL matching
 // This prevents issues with SQL collision and improves lookup performance
-func getPolicyDataFromContext(queryKey string, sqlFinalMap map[string]policyInput) (policyInput, bool) {
+func getPolicyDataFromContext(queryKey string, sqlFinalMap map[string]PolicyInput) (PolicyInput, bool) {
 	// Remove [n] suffix from query key if present
 	cleanKey := queryKey
 	if bracketIndex := strings.Index(cleanKey, "["); bracketIndex != -1 {
@@ -607,13 +602,13 @@ func getPolicyDataFromContext(queryKey string, sqlFinalMap map[string]policyInpu
 
 	// Fallback to SQL matching for backward compatibility (legacy format)
 	for _, policyData := range sqlFinalMap {
-		if strings.TrimSpace(policyData.finalSQL) == strings.TrimSpace(queryKey) {
+		if strings.TrimSpace(policyData.FinalSQL) == strings.TrimSpace(queryKey) {
 			logger.Debugf("Found policy data using SQL fallback for key: %s", queryKey)
 			return policyData, true
 		}
 	}
 
-	return policyInput{}, false
+	return PolicyInput{}, false
 }
 
 func isPolicyAllowed(output, resAllow, resDeny string, policyLogger *log.Logger, result QueryResult) bool {
@@ -741,7 +736,7 @@ func processCombinedPolicyResultsFromNotification(jobID string, combinedContext 
 	logger.Infof("Processing combined policy results from notification file: %s", localFilePath)
 
 	// Read and parse the already downloaded file
-	resultsData, err := parseResultsFile(localFilePath)
+	resultsData, err := ParseResultsFile(localFilePath)
 	if err != nil {
 		return fmt.Errorf("failed to parse notification results file for job %s: %v", jobID, err)
 	}
@@ -764,13 +759,13 @@ func processCombinedPolicyResultsFromVeloArtifact(jobID string, combinedContext 
 	logger.Infof("Processing combined policy results from VeloArtifact polling for job %s", jobID)
 
 	// Get endpoint information
-	ep, err := getEndpointForJob(jobID, combinedContext.EndpointID)
+	ep, err := GetEndpointForJob(jobID, combinedContext.EndpointID)
 	if err != nil {
 		return err
 	}
 
 	// Retrieve and download results file via VeloArtifact
-	resultsData, err := retrieveJobResults(jobID, ep)
+	resultsData, err := RetrieveJobResults(jobID, ep)
 	if err != nil {
 		return err
 	}
@@ -828,7 +823,6 @@ func createCombinedPoliciesFromResults(jobID string, combinedContext *CombinedPo
 
 	for _, result := range resultsData {
 		if result.Status != "success" {
-			// logger.Debugf("Skipping failed query result: %s", result.QueryKey)
 			continue
 		}
 
@@ -860,21 +854,18 @@ func createCombinedPoliciesFromResults(jobID string, combinedContext *CombinedPo
 
 		// Process query result and determine policy action
 		output := processQueryResult(result.Result)
-		policyDefault := policyData.policydf
+		policyDefault := policyData.Policydf
 		resAllow := policyDefault.SqlGetAllow
 		resDeny := policyDefault.SqlGetDeny
-
-		// logger.Debugf("Combined policy comparison for %s: output='%s', resAllow='%s', resDeny='%s'", result.QueryKey, output, resAllow, resDeny)
 
 		if isPolicyAllowed(output, resAllow, resDeny, policyLogger, result) {
 			// Check for existing policy to prevent duplicates
 			var existingPolicy models.DBPolicy
 			err := tx.Where("dbmgt_id = ? AND actor_id = ? AND object_id = ? AND dbpolicydefault_id = ?",
-				dbMgtID, policyData.actorId, policyData.objectId, policyDefault.ID).First(&existingPolicy).Error
+				dbMgtID, policyData.ActorId, policyData.ObjectId, policyDefault.ID).First(&existingPolicy).Error
 
 			if err == nil {
 				// Policy already exists, skip creation
-				// logger.Debugf("Combined policy already exists for %s, skipping duplicate", result.QueryKey)
 				continue
 			} else if err != gorm.ErrRecordNotFound {
 				// Database error
@@ -887,8 +878,8 @@ func createCombinedPoliciesFromResults(jobID string, combinedContext *CombinedPo
 				CntMgt:          combinedContext.CntMgtID,
 				DBPolicyDefault: policyDefault.ID,
 				DBMgt:           utils.MustUintToInt(dbMgtID),
-				DBActorMgt:      policyData.actorId,
-				DBObjectMgt:     policyData.objectId,
+				DBActorMgt:      policyData.ActorId,
+				DBObjectMgt:     policyData.ObjectId,
 				Status:          "enabled",
 				Description:     "Auto-collected from V2-DBF Agent",
 			}
@@ -900,8 +891,6 @@ func createCombinedPoliciesFromResults(jobID string, combinedContext *CombinedPo
 
 			totalInserts++
 			processedDBs[dbMgtID]++
-
-			// logger.Debugf("Created combined policy: query_key=%s, policy_id=%d, dbmgt_id=%d, actor_id=%d", result.QueryKey, dbpolicy.ID, dbMgtID, actorID)
 
 			if policyAuditLogger != nil {
 				policyAuditLogger.Printf("INSERT COMBINED: policy_id=%d, dbmgt_id=%d, actor_id=%d, policy_df_id=%d, object_id=%d",

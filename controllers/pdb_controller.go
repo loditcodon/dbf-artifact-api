@@ -6,17 +6,17 @@ import (
 	"strconv"
 
 	"dbfartifactapi/pkg/logger"
-	"dbfartifactapi/services"
+	"dbfartifactapi/services/pdb"
 	"dbfartifactapi/utils"
 
 	"github.com/gin-gonic/gin"
 )
 
-var pdbSrv = services.NewPDBService()
+var pdbSrv = pdb.NewPDBService()
 
 // SetPDBService initializes the PDB management service instance.
 // Used for dependency injection in tests to provide mock implementations.
-func SetPDBService(s services.PDBService) {
+func SetPDBService(s pdb.PDBService) {
 	pdbSrv = s
 }
 
@@ -69,7 +69,7 @@ func postPDBAll(c *gin.Context) {
 // @Failure 500 {object} DatabaseCreationErrorResponse "Internal server error"
 // @Router /api/queries/pdb [post]
 func createPDB(c *gin.Context) {
-	var req services.PDBCreateRequest
+	var req pdb.PDBCreateRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		utils.ErrorResponse(c, err)
 		return
@@ -113,7 +113,7 @@ func updatePDB(c *gin.Context) {
 		return
 	}
 
-	var req services.PDBUpdateRequest
+	var req pdb.PDBUpdateRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		utils.ErrorResponse(c, err)
 		return

@@ -1,4 +1,4 @@
-package services
+package pdb
 
 import (
 	"context"
@@ -372,22 +372,22 @@ func (s *pdbService) Create(ctx context.Context, req PDBCreateRequest) (*models.
 func (s *pdbService) Update(ctx context.Context, id uint, req PDBUpdateRequest) error {
 	tx := s.baseRepo.Begin()
 
-	pdb, err := s.cntMgtRepo.GetCntMgtByID(tx, id)
+	pdbRec, err := s.cntMgtRepo.GetCntMgtByID(tx, id)
 	if err != nil {
 		tx.Rollback()
 		return fmt.Errorf("PDB cntmgt id=%d not found: %w", id, err)
 	}
 
 	// Ensure target is a PDB, not a CDB
-	if pdb.ParentConnectionID == nil {
+	if pdbRec.ParentConnectionID == nil {
 		tx.Rollback()
 		return fmt.Errorf("cntmgt id=%d is not a PDB (no parent_connection_id)", id)
 	}
 
-	cdb, err := s.cntMgtRepo.GetCntMgtByID(tx, *pdb.ParentConnectionID)
+	cdb, err := s.cntMgtRepo.GetCntMgtByID(tx, *pdbRec.ParentConnectionID)
 	if err != nil {
 		tx.Rollback()
-		return fmt.Errorf("parent CDB cntmgt id=%d not found: %w", *pdb.ParentConnectionID, err)
+		return fmt.Errorf("parent CDB cntmgt id=%d not found: %w", *pdbRec.ParentConnectionID, err)
 	}
 
 	ep, err := s.endpointRepo.GetByID(tx, utils.MustIntToUint(cdb.Agent))
@@ -409,7 +409,7 @@ func (s *pdbService) Update(ctx context.Context, id uint, req PDBUpdateRequest) 
 	}
 
 	// PDB name stored directly as cntname
-	finalSQL := strings.TrimSpace(fmt.Sprintf(pdbAlterSQL, pdb.CntName, decodedSqlParam))
+	finalSQL := strings.TrimSpace(fmt.Sprintf(pdbAlterSQL, pdbRec.CntName, decodedSqlParam))
 	logger.Debugf("Final SQL for PDB alter: %s", finalSQL)
 
 	// Oracle requires service_name to establish connection to CDB
@@ -433,7 +433,7 @@ func (s *pdbService) Update(ctx context.Context, id uint, req PDBUpdateRequest) 
 	_, err = agent.ExecuteSqlAgentAPI(ep.ClientID, ep.OsType, "execute", hexJSON, "", false)
 	if err != nil {
 		tx.Rollback()
-		return fmt.Errorf("failed to alter PDB %s on remote server: %w", pdb.CntName, err)
+		return fmt.Errorf("failed to alter PDB %s on remote server: %w", pdbRec.CntName, err)
 	}
 
 	if err := tx.Commit().Error; err != nil {
@@ -449,22 +449,22 @@ func (s *pdbService) Update(ctx context.Context, id uint, req PDBUpdateRequest) 
 func (s *pdbService) Delete(ctx context.Context, id uint, sqlParam string) error {
 	tx := s.baseRepo.Begin()
 
-	pdb, err := s.cntMgtRepo.GetCntMgtByID(tx, id)
+	pdbRec, err := s.cntMgtRepo.GetCntMgtByID(tx, id)
 	if err != nil {
 		tx.Rollback()
 		return fmt.Errorf("PDB cntmgt id=%d not found: %w", id, err)
 	}
 
 	// Ensure target is a PDB, not a CDB
-	if pdb.ParentConnectionID == nil {
+	if pdbRec.ParentConnectionID == nil {
 		tx.Rollback()
 		return fmt.Errorf("cntmgt id=%d is not a PDB (no parent_connection_id)", id)
 	}
 
-	cdb, err := s.cntMgtRepo.GetCntMgtByID(tx, *pdb.ParentConnectionID)
+	cdb, err := s.cntMgtRepo.GetCntMgtByID(tx, *pdbRec.ParentConnectionID)
 	if err != nil {
 		tx.Rollback()
-		return fmt.Errorf("parent CDB cntmgt id=%d not found: %w", *pdb.ParentConnectionID, err)
+		return fmt.Errorf("parent CDB cntmgt id=%d not found: %w", *pdbRec.ParentConnectionID, err)
 	}
 
 	ep, err := s.endpointRepo.GetByID(tx, utils.MustIntToUint(cdb.Agent))
@@ -488,8 +488,8 @@ func (s *pdbService) Delete(ctx context.Context, id uint, sqlParam string) error
 	// Build multi-command PL/SQL: CLOSE then DROP, joined by Oracle separator
 	// Follows executeBatchSQLForConnection pattern from group_management_service
 	commands := []string{
-		fmt.Sprintf(pdbDropClose, pdb.CntName),
-		fmt.Sprintf(pdbDropDrop, pdb.CntName),
+		fmt.Sprintf(pdbDropClose, pdbRec.CntName),
+		fmt.Sprintf(pdbDropDrop, pdbRec.CntName),
 	}
 	if strings.TrimSpace(decodedSqlParam) != "" {
 		commands = append(commands, decodedSqlParam)
@@ -518,7 +518,7 @@ func (s *pdbService) Delete(ctx context.Context, id uint, sqlParam string) error
 	_, err = agent.ExecuteSqlAgentAPI(ep.ClientID, ep.OsType, "execute", hexJSON, "", false)
 	if err != nil {
 		tx.Rollback()
-		return fmt.Errorf("failed to drop PDB %s on remote server: %w", pdb.CntName, err)
+		return fmt.Errorf("failed to drop PDB %s on remote server: %w", pdbRec.CntName, err)
 	}
 
 	if err := s.cntMgtRepo.DeleteByID(tx, id); err != nil {
