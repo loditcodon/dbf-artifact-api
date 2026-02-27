@@ -21,15 +21,14 @@ dbfartifactapi_151/
 │   └── swagger_*.go               - Swagger model definitions
 ├── services/ (17,464 LOC, 33 files) - Business logic + dbfAgentAPI orchestration
 │   ├── agent/agent_api_service.go (563 LOC) - Core dbfAgentAPI integration (sub-package)
+│   ├── entity/ (sub-package)        - DBMgt, DBActorMgt, DBObjectMgt CRUD + object completion handler
 │   ├── fileops/ (sub-package)       - Backup, download, upload services + completion handlers
 │   ├── session/ (sub-package)       - Session kill + connection test services
-│   ├── job_monitor_service.go (634 LOC) - Job polling + completion callbacks
+│   ├── job/ (sub-package)           - Job monitor service + job types
 │   ├── privilege/ (sub-package)      - Shared privilege types, registry, session base
-│   │   └── mysql/ (sub-package)     - MySQL in-memory privilege discovery
-│   ├── privilege_session.go         - Oracle in-memory server setup (reuses PrivilegeSession from privilege/)
-│   ├── privilege_session_handler.go - Oracle three-pass privilege handler (shared types for Oracle)
-│   ├── oracle_privilege_session*.go - Oracle privilege discovery (1,707 LOC)
-│   ├── *_service.go              - Business logic for each entity
+│   │   ├── mysql/ (sub-package)     - MySQL in-memory privilege discovery
+│   │   └── oracle/ (sub-package)    - Oracle in-memory privilege discovery
+│   ├── *_service.go              - Business logic for remaining entities
 │   └── *_completion_handler.go   - Background job result callbacks
 ├── models/ (390 LOC, 18 files) - GORM domain entities
 │   ├── cntmgt_model.go           - Connection management (MySQL/Oracle/PG/MSSQL)
@@ -89,14 +88,17 @@ dbfartifactapi_151/
 
 **Core Services:**
 - dbpolicy_service.go (1,340 LOC) - GetByCntMgt, Create, Update, Delete, Bulk operations
-- dbmgt_service.go (409 LOC) - Database management
-- dbactormgt_service.go (1,134 LOC) - Actor management
-- dbobjectmgt_service.go (1,046 LOC) - Object management
 - group_management_service.go (1,963 LOC) - Group/policy/actor assignments
+
+**Entity Services (`services/entity/`):**
+- entity/dbmgt_service.go (409 LOC) - Database management CRUD
+- entity/dbactormgt_service.go (1,134 LOC) - Actor management CRUD
+- entity/dbobjectmgt_service.go (1,046 LOC) - Object management CRUD + discovery
+- entity/object_completion_handler.go (824 LOC) - Object job completion callbacks
 
 **Infrastructure Services:**
 - agent/agent_api_service.go (563 LOC) - dbfAgentAPI orchestration (sub-package)
-- job_monitor_service.go (634 LOC) - Job polling + callbacks
+- job/job_monitor_service.go (634 LOC) - Job polling + callbacks (sub-package)
 - fileops/backup_service.go (466 LOC), fileops/download_service.go (196 LOC), fileops/upload_service.go (145 LOC) - (sub-package)
 - session/session_service.go (129 LOC), session/connection_test_service.go (144 LOC) - (sub-package)
 - policy_compliance_service.go (139 LOC), pdb_service.go (533 LOC)
@@ -110,19 +112,19 @@ dbfartifactapi_151/
 - privilege/mysql/session.go (~200 LOC) - NewMySQLPrivilegeSession, MySQL privilege table schemas, data loading
 - privilege/mysql/handler.go (~1,991 LOC) - CreatePrivilegeSessionCompletionHandler, three-pass engine
 
-**Privilege Discovery (Oracle):**
-- oracle_privilege_session.go (107 LOC) - In-memory Oracle setup
-- oracle_privilege_session_handler.go (1,600 LOC) - Three-pass privilege discovery
-- oracle_privilege_queries.go (275 LOC) - Oracle-specific queries
-- oracle_connection_helper.go (74 LOC) - CDB/PDB detection
+**Privilege Discovery (Oracle) (`services/privilege/oracle/`):**
+- privilege/oracle/handler.go (~1,600 LOC) - CreateOraclePrivilegeSessionCompletionHandler, three-pass engine
+- privilege/oracle/privilege_session.go (~107 LOC) - In-memory Oracle setup
+- privilege/oracle/queries.go (~275 LOC) - Oracle-specific queries
+- privilege/oracle/connection_helper.go (~74 LOC) - CDB/PDB detection
 
 **Job Completion Handlers:**
 - policy_completion_handler.go (966 LOC)
 - bulk_policy_completion_handler.go (298 LOC)
-- object_completion_handler.go (824 LOC)
-- backup_completion_handler.go (347 LOC) - (in fileops/)
-- download_completion_handler.go (76 LOC) - (in fileops/)
-- upload_completion_handler.go (133 LOC) - (in fileops/)
+- entity/object_completion_handler.go (824 LOC) - (in entity/)
+- fileops/backup_completion_handler.go (347 LOC) - (in fileops/)
+- fileops/download_completion_handler.go (76 LOC) - (in fileops/)
+- fileops/upload_completion_handler.go (133 LOC) - (in fileops/)
 - policy_compliance_completion_handler.go (321 LOC)
 
 ### Models (390 LOC, 18 files)
@@ -249,10 +251,13 @@ jobMonitor.RegisterJob(jobID, &JobInfo{
 ```
 Controllers → Services → Repository → Models → GORM
            ↘ Services/agent (dbfAgentAPI)
+           ↘ Services/entity (DBMgt, DBActorMgt, DBObjectMgt CRUD)
            ↘ Services/fileops (backup/download/upload)
            ↘ Services/session (session/connection-test)
+           ↘ Services/job (job monitoring)
            ↘ Services/privilege (shared types, registry, session base)
            ↘ Services/privilege/mysql (MySQL privilege discovery)
+           ↘ Services/privilege/oracle (Oracle privilege discovery)
            ↘ utils (validation, logger, conversion)
            ↘ pkg/logger (structured logging)
            ↘ config (DB connection, env vars)
