@@ -73,10 +73,13 @@ The DBF Artifact API is a layered, service-oriented system for managing database
 ├─────────────────────────────────────────────────────────────────┤
 │ Policy Services           Job Management (`services/job/`)  │
 │ ├─ DBPolicy              ├─ JobMonitor                │
-│ ├─ DBMgt                 ├─ PolicyCompletion          │
-│ ├─ DBActorMgt            ├─ BulkCompletion            │
-│ ├─ DBObjectMgt           ├─ ObjectCompletion          │
-│ └─ Group Management      └─ Other Handlers            │
+│ └─ Group Management      ├─ PolicyCompletion          │
+│                          ├─ BulkCompletion            │
+│ Entity Mgt (`services/entity/`)  └─ Other Handlers    │
+│ ├─ DBMgt                                              │
+│ ├─ DBActorMgt                                         │
+│ ├─ DBObjectMgt                                        │
+│ └─ ObjectCompletionHandler                            │
 │                                                       │
 │ Privilege Discovery (`services/privilege/`)            │
 │ ├─ privilege/ (shared types, registry, session)        │
@@ -387,7 +390,8 @@ Background Job Submitted (job_id: "abc123")
 services/privilege        (no imports of services/ or privilege/mysql/ or privilege/oracle/)
 services/privilege/mysql  (imports privilege, NOT services/)
 services/privilege/oracle (imports privilege, NOT services/)
-services/                 (imports privilege, privilege/mysql, privilege/oracle, registers via init())
+services/entity           (imports agent, dto, job, repository; NOT services/)
+services/                 (imports privilege, privilege/mysql, privilege/oracle, entity, registers via init())
 ```
 
 **MySQL Privilege Session (`services/privilege/mysql/`):**
@@ -405,6 +409,26 @@ services/                 (imports privilege, privilege/mysql, privilege/oracle,
 - `oracle_connection_helper.go` — Type aliases and delegation wrappers for Oracle connection types
 - `oracle_privilege_queries.go` — `dbPolicyService` methods that delegate to `oracle.*`
 
+### Entity Management Services (`services/entity/`)
+
+**DBMgtService:**
+- CRUD operations for database instances (dbmgt)
+- Delegates to repository layer
+
+**DBActorMgtService:**
+- CRUD operations for database actors/users (dbactormgt)
+- Delegates to repository layer
+
+**DBObjectMgtService:**
+- CRUD operations for database objects (dbobjectmgt)
+- Object discovery via agent API
+- Delegates to repository layer
+
+**ObjectCompletionHandler:**
+- Download discovered objects from agent
+- Create DBObjectMgt records
+- Update database asset inventory
+
 ### Completion Handlers
 
 **Policy Completion Handler:**
@@ -417,11 +441,6 @@ services/                 (imports privilege, privilege/mysql, privilege/oracle,
 - Process bulk update results
 - Atomic consistency check
 - Update multiple policies
-
-**Object Completion Handler:**
-- Download discovered objects
-- Create DBObjectMgt records
-- Update database asset inventory
 
 **File Operations Completion Handlers** (`services/fileops/`):
 - Backup, download, upload completion handlers
