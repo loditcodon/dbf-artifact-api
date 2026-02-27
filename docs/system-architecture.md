@@ -78,10 +78,13 @@ The DBF Artifact API is a layered, service-oriented system for managing database
 │ ├─ DBObjectMgt           ├─ ObjectCompletion          │
 │ └─ Group Management      └─ Other Handlers            │
 │                                                       │
-│ Privilege Discovery       Infrastructure              │
-│ ├─ PrivilegeSession       ├─ AgentAPI                 │
-│ ├─ OraclePrivilegeSession ├─ Backup/Upload/Download   │
-│ └─ Handlers (MySQL/Oracle)└─ Connection Testing       │
+│ Privilege Discovery (`services/privilege/`)            │
+│ ├─ privilege/ (shared types, registry, session)        │
+│ ├─ privilege/mysql/ (MySQL handler+session)            │
+│ ├─ OraclePrivilegeSession  Infrastructure             │
+│ └─ Oracle Handlers          ├─ AgentAPI               │
+│                              ├─ Backup/Upload/Download│
+│                              └─ Connection Testing    │
 └─────────────────────────────────────────────────────────────────┘
                               ↓
 ┌─────────────────────────────────────────────────────────────────┐
@@ -369,15 +372,25 @@ Background Job Submitted (job_id: "abc123")
 - `CancelJob(jobID)` - Cancel polling
 - `Stop()` - Graceful shutdown
 
-### Privilege Session Services
+### Privilege Discovery Services (`services/privilege/`)
 
-**MySQL Privilege Session:**
-1. Create in-memory go-mysql-server
-2. Load privilege data from remote MySQL
-3. Execute three-pass policy engine
-4. Auto-create policies and assignments
+**Shared Package (`services/privilege/`):**
+- `types.go` — Shared types: `PrivilegeSessionJobContext`, `QueryResult`, `PolicyEvaluator` interface, registry function types
+- `registry.go` — Registry pattern to break circular dependency between `services/` and `privilege/mysql/`. Functions registered via `init()` in `services/dbpolicy_service.go`
+- `session.go` — `PrivilegeSession` struct (in-memory go-mysql-server), `GetFreePort()`, `ExecuteInDatabase()`, `ExecuteTemplate()`
 
-**Oracle Privilege Session:**
+**Dependency Graph:**
+```
+services/privilege      (no imports of services/ or privilege/mysql/)
+services/privilege/mysql (imports privilege, NOT services/)
+services/                (imports privilege AND privilege/mysql, registers via init())
+```
+
+**MySQL Privilege Session (`services/privilege/mysql/`):**
+- `session.go` — `NewMySQLPrivilegeSession()`, creates in-memory go-mysql-server with MySQL privilege tables
+- `handler.go` — `CreatePrivilegeSessionCompletionHandler()`, three-pass policy engine (SUPER → action-wide → object-specific)
+
+**Oracle Privilege Session (still in `services/`):**
 1. Create in-memory Oracle server
 2. Detect CDB vs PDB
 3. Execute Oracle-specific queries

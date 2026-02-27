@@ -24,9 +24,12 @@ dbfartifactapi_151/
 │   ├── fileops/ (sub-package)       - Backup, download, upload services + completion handlers
 │   ├── session/ (sub-package)       - Session kill + connection test services
 │   ├── job_monitor_service.go (634 LOC) - Job polling + completion callbacks
-│   ├── *_service.go              - Business logic for each entity
-│   ├── privilege_session*.go      - MySQL in-memory privilege discovery (2,752 LOC)
+│   ├── privilege/ (sub-package)      - Shared privilege types, registry, session base
+│   │   └── mysql/ (sub-package)     - MySQL in-memory privilege discovery
+│   ├── privilege_session.go         - Oracle in-memory server setup (reuses PrivilegeSession from privilege/)
+│   ├── privilege_session_handler.go - Oracle three-pass privilege handler (shared types for Oracle)
 │   ├── oracle_privilege_session*.go - Oracle privilege discovery (1,707 LOC)
+│   ├── *_service.go              - Business logic for each entity
 │   └── *_completion_handler.go   - Background job result callbacks
 ├── models/ (390 LOC, 18 files) - GORM domain entities
 │   ├── cntmgt_model.go           - Connection management (MySQL/Oracle/PG/MSSQL)
@@ -98,9 +101,14 @@ dbfartifactapi_151/
 - session/session_service.go (129 LOC), session/connection_test_service.go (144 LOC) - (sub-package)
 - policy_compliance_service.go (139 LOC), pdb_service.go (533 LOC)
 
-**Privilege Discovery (MySQL):**
-- privilege_session.go (752 LOC) - In-memory MySQL setup
-- privilege_session_handler.go (2,000 LOC) - Three-pass privilege discovery
+**Privilege Discovery — Shared (`services/privilege/`):**
+- privilege/types.go (~60 LOC) - Shared types: PrivilegeSessionJobContext, QueryResult, PolicyEvaluator interface, registry func types
+- privilege/registry.go (~72 LOC) - Registry pattern: RegisterNewPolicyEvaluator, RegisterRetrieveJobResults, RegisterGetEndpointForJob
+- privilege/session.go (~101 LOC) - PrivilegeSession struct, ExecuteTemplate, ExecuteInDatabase, GetFreePort
+
+**Privilege Discovery (MySQL) (`services/privilege/mysql/`):**
+- privilege/mysql/session.go (~200 LOC) - NewMySQLPrivilegeSession, MySQL privilege table schemas, data loading
+- privilege/mysql/handler.go (~1,991 LOC) - CreatePrivilegeSessionCompletionHandler, three-pass engine
 
 **Privilege Discovery (Oracle):**
 - oracle_privilege_session.go (107 LOC) - In-memory Oracle setup
@@ -243,6 +251,8 @@ Controllers → Services → Repository → Models → GORM
            ↘ Services/agent (dbfAgentAPI)
            ↘ Services/fileops (backup/download/upload)
            ↘ Services/session (session/connection-test)
+           ↘ Services/privilege (shared types, registry, session base)
+           ↘ Services/privilege/mysql (MySQL privilege discovery)
            ↘ utils (validation, logger, conversion)
            ↘ pkg/logger (structured logging)
            ↘ config (DB connection, env vars)
@@ -315,5 +325,5 @@ endpoints ←─── CntMgt.Agent (FK)
 
 ---
 
-**Last Updated:** 2026-02-26
+**Last Updated:** 2026-02-27
 **Maintainer:** DBF Architecture Team
