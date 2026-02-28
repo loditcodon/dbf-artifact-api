@@ -87,11 +87,13 @@ dbfartifactapi_151/
 | backup_swagger_models.go | 100 | Swagger model definitions |
 | upload_swagger_models.go | 75 | Swagger model definitions |
 
-### Services (17,464 LOC, 33 files)
+### Services (~17K LOC, 39 files across 11 sub-packages)
 
-**Core Services:**
-- group_management_service.go → `services/group/group_management_service.go` (1,963 LOC) - Group/policy/actor assignments (Phase 9)
-- policy_compliance_service.go → `services/compliance/policy_compliance_service.go` (139 LOC) - Compliance check orchestration (Phase 10)
+**Entity Services (`services/entity/`):**
+- entity/dbmgt_service.go (~650 LOC) - Database management CRUD + privilege discovery delegation
+- entity/dbactormgt_service.go (~600 LOC) - Actor management CRUD
+- entity/dbobjectmgt_service.go (~500 LOC) - Object management CRUD
+- entity/object_completion_handler.go (~824 LOC) - Object discovery completion
 
 **Policy Services (`services/policy/`, Phase 8):**
 - policy/dbpolicy_service.go (1,340 LOC) - GetByCntMgt, Create, Update, Delete, Bulk operations
@@ -115,7 +117,6 @@ dbfartifactapi_151/
 - job/job_monitor_service.go (634 LOC) - Job polling + callbacks (sub-package)
 - fileops/backup_service.go (466 LOC), fileops/download_service.go (196 LOC), fileops/upload_service.go (145 LOC) - (sub-package)
 - session/session_service.go (129 LOC), session/connection_test_service.go (144 LOC) - (sub-package)
-- policy_compliance_completion_handler.go (321 LOC)
 
 **Privilege Discovery — Shared (`services/privilege/`):**
 - privilege/types.go (~60 LOC) - Shared types: PrivilegeSessionJobContext, QueryResult, PolicyEvaluator interface, registry func types
@@ -139,7 +140,7 @@ dbfartifactapi_151/
 - fileops/backup_completion_handler.go (347 LOC) - (in fileops/)
 - fileops/download_completion_handler.go (76 LOC) - (in fileops/)
 - fileops/upload_completion_handler.go (133 LOC) - (in fileops/)
-- policy_compliance_completion_handler.go (321 LOC)
+- compliance/policy_compliance_completion_handler.go (321 LOC) - (in compliance/)
 
 ### Models (390 LOC, 18 files)
 
