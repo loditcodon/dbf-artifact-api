@@ -1,4 +1,4 @@
-package services
+package group
 
 import (
 	"context"
@@ -14,6 +14,7 @@ import (
 	"dbfartifactapi/repository"
 	"dbfartifactapi/services/agent"
 	"dbfartifactapi/services/dto"
+	"dbfartifactapi/services/privilege/oracle"
 	"dbfartifactapi/utils"
 
 	"gorm.io/gorm"
@@ -1509,8 +1510,8 @@ func (s *groupManagementService) buildOptimizedBatchSQL(policyIDs []uint, actors
 	objectTypeWildcard := "*" // Default for non-Oracle
 	isOracle := strings.ToLower(cmt.CntType) == "oracle"
 	if isOracle {
-		connType := GetOracleConnectionType(cmt)
-		objectTypeWildcard = GetObjectTypeWildcard(connType)
+		connType := oracle.GetOracleConnectionType(cmt)
+		objectTypeWildcard = oracle.GetObjectTypeWildcard(connType)
 		logger.Debugf("Oracle connection detected: cntID=%d, cntType=%s, connType=%s, objectTypeWildcard=%s",
 			cntID, cmt.CntType, connType.String(), objectTypeWildcard)
 	}

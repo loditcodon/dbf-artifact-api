@@ -8,16 +8,16 @@ import (
 
 	"dbfartifactapi/models"
 	"dbfartifactapi/pkg/logger"
-	"dbfartifactapi/services"
+	"dbfartifactapi/services/group"
 	"dbfartifactapi/utils"
 
 	"github.com/gin-gonic/gin"
 )
 
-var groupMgtSrv = services.NewGroupManagementService()
+var groupMgtSrv = group.NewGroupManagementService()
 
 // SetGroupManagementService initializes the group management service instance.
-func SetGroupManagementService(srv services.GroupManagementService) {
+func SetGroupManagementService(srv group.GroupManagementService) {
 	groupMgtSrv = srv
 }
 
@@ -556,7 +556,7 @@ func updateGroupAssignments(c *gin.Context) {
 		return
 	}
 
-	var request services.GroupAssignmentsUpdateRequest
+	var request group.GroupAssignmentsUpdateRequest
 	if err := c.ShouldBindJSON(&request); err != nil {
 		utils.ErrorResponse(c, fmt.Errorf("invalid request body: %v", err))
 		return
