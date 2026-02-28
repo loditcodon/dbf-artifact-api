@@ -24,15 +24,15 @@ dbfartifactapi_151/
 │   ├── entity/ (sub-package)        - DBMgt, DBActorMgt, DBObjectMgt CRUD + object completion handler
 │   ├── policy/ (sub-package)         - DBPolicy CRUD + privilege discovery + completion handlers (Phase 8)
 │   ├── pdb/ (sub-package)            - PDB management services (Phase 8)
+│   ├── group/ (sub-package)          - Group management CRUD + assignments (Phase 9)
+│   ├── compliance/ (sub-package)     - Policy compliance monitoring + completion handlers (Phase 10)
 │   ├── fileops/ (sub-package)        - Backup, download, upload services + completion handlers
 │   ├── session/ (sub-package)        - Session kill + connection test services
 │   ├── job/ (sub-package)            - Job monitor service + job types
 │   ├── privilege/ (sub-package)      - Shared privilege types, registry, session base
 │   │   ├── mysql/ (sub-package)     - MySQL in-memory privilege discovery
 │   │   └── oracle/ (sub-package)    - Oracle in-memory privilege discovery
-│   ├── group_management_service.go - Group/policy/actor assignments
-│   ├── policy_compliance_service.go - Compliance check orchestration
-│   └── *_completion_handler.go     - Background job result callbacks
+│   └── dto/                          - Unchanged
 ├── models/ (390 LOC, 18 files) - GORM domain entities
 │   ├── cntmgt_model.go           - Connection management (MySQL/Oracle/PG/MSSQL)
 │   ├── dbmgt_model.go            - Database instances
@@ -90,8 +90,8 @@ dbfartifactapi_151/
 ### Services (17,464 LOC, 33 files)
 
 **Core Services:**
-- group_management_service.go (1,963 LOC) - Group/policy/actor assignments
-- policy_compliance_service.go (139 LOC) - Compliance check orchestration
+- group_management_service.go → `services/group/group_management_service.go` (1,963 LOC) - Group/policy/actor assignments (Phase 9)
+- policy_compliance_service.go → `services/compliance/policy_compliance_service.go` (139 LOC) - Compliance check orchestration (Phase 10)
 
 **Policy Services (`services/policy/`, Phase 8):**
 - policy/dbpolicy_service.go (1,340 LOC) - GetByCntMgt, Create, Update, Delete, Bulk operations
@@ -103,11 +103,12 @@ dbfartifactapi_151/
 **PDB Services (`services/pdb/`, Phase 8):**
 - pdb/pdb_service.go (533 LOC) - PDB management CRUD
 
-**Entity Services (`services/entity/`):**
-- entity/dbmgt_service.go (409 LOC) - Database management CRUD
-- entity/dbactormgt_service.go (1,134 LOC) - Actor management CRUD
-- entity/dbobjectmgt_service.go (1,046 LOC) - Object management CRUD + discovery
-- entity/object_completion_handler.go (824 LOC) - Object job completion callbacks
+**Group Management Services (`services/group/`, Phase 9):**
+- group/group_management_service.go (1,963 LOC) - Group CRUD + policy/actor assignments
+
+**Compliance Services (`services/compliance/`, Phase 10):**
+- compliance/policy_compliance_service.go (139 LOC) - Compliance check orchestration
+- compliance/policy_compliance_completion_handler.go (321 LOC) - Compliance result processing
 
 **Infrastructure Services:**
 - agent/agent_api_service.go (563 LOC) - dbfAgentAPI orchestration (sub-package)
@@ -267,6 +268,8 @@ Controllers → Services → Repository → Models → GORM
            ↘ Services/entity (DBMgt, DBActorMgt, DBObjectMgt CRUD)
            ↘ Services/policy (Policy CRUD + privilege discovery)
            ↘ Services/pdb (PDB management)
+           ↘ Services/group (Group management + assignments) - Phase 9
+           ↘ Services/compliance (Compliance monitoring) - Phase 10
            ↘ Services/fileops (backup/download/upload)
            ↘ Services/session (session/connection-test)
            ↘ Services/job (job monitoring)
@@ -345,5 +348,5 @@ endpoints ←─── CntMgt.Agent (FK)
 
 ---
 
-**Last Updated:** 2026-02-27
+**Last Updated:** 2026-02-28
 **Maintainer:** DBF Architecture Team

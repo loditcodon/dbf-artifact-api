@@ -1,7 +1,7 @@
 # DBF Artifact API - System Architecture
 
-**Version:** 1.0
-**Last Updated:** 2026-02-27
+**Version:** 1.1
+**Last Updated:** 2026-02-28
 **Status:** Active Development
 
 ---
@@ -84,6 +84,12 @@ The DBF Artifact API is a layered, service-oriented system for managing database
 │ ├─ DBActorMgt                                         │
 │ ├─ DBObjectMgt                                        │
 │ └─ ObjectCompletionHandler                            │
+│                                                       │
+│ Group Management (`services/group/`)                            │
+│ └─ Group CRUD + policy/actor assignments              │
+│                                                       │
+│ Compliance (`services/compliance/`)                             │
+│ └─ Policy compliance checks + results                 │
 │                                                       │
 │ Job Management (`services/job/`)                                │
 │ ├─ JobMonitor                                         │
@@ -457,6 +463,45 @@ services/                 (other services import privilege, privilege/mysql, pri
 - Create DBObjectMgt records
 - Update database asset inventory
 
+### Group Management Service (`services/group/`, Phase 9)
+
+**Responsibilities:**
+- CRUD operations for hierarchical groups (DBGroupMgt)
+- Group policy assignments (DBPolicyGroups)
+- Group actor assignments (DBActorGroups)
+- Bulk assignment operations
+- Policy list definitions (DBGroupListPolicies)
+
+**Key Files:**
+- `group/group_management_service.go` - Group CRUD + assignments
+
+**Key Methods:**
+- `Create(group)`, `GetByID(id)`, `Update(group)`, `Delete(id)` - Group CRUD
+- `AssignPolicyToGroup(policyID, groupID)` - Assign policy to group
+- `AssignActorToGroup(actorID, groupID)` - Assign actor to group
+- `BulkAssignPolicies(groupID, policies)` - Bulk policy assignment
+
+**Dependency:** Imports `services/privilege/oracle` for utility functions (`GetOracleConnectionType()`, `GetObjectTypeWildcard()`).
+
+### Compliance Service (`services/compliance/`, Phase 10)
+
+**Responsibilities:**
+- Policy compliance monitoring and verification
+- Compliance check orchestration via dbfAgentAPI
+- Generate compliance reports
+- Track policy violations
+
+**Key Files:**
+- `compliance/policy_compliance_service.go` - Compliance check orchestration
+- `compliance/policy_compliance_completion_handler.go` - Compliance result processing
+
+**Key Methods:**
+- `CheckCompliance(policyID)` - Check policy compliance status
+- `CheckComplianceByDatabase(dbID)` - Check all policies for database
+- `GenerateComplianceReport()` - Generate compliance report
+
+**Dependency:** Imports `services/agent`, `services/entity`, `services/job` for orchestration.
+
 ### Completion Handlers
 
 **Policy Completion Handler** (`services/policy/`)
@@ -693,6 +738,6 @@ go test -cover ./...
 
 ---
 
-**Last Updated:** 2026-02-27
+**Last Updated:** 2026-02-28
 **Architecture Owner:** DBF Architecture Team
-**Next Review:** 2026-05-27
+**Next Review:** 2026-05-28
