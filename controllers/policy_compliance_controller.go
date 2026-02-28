@@ -5,16 +5,16 @@ import (
 	"strconv"
 
 	"dbfartifactapi/pkg/logger"
-	"dbfartifactapi/services"
+	"dbfartifactapi/services/compliance"
 	"dbfartifactapi/utils"
 
 	"github.com/gin-gonic/gin"
 )
 
-var policyComplianceSrv = services.NewPolicyComplianceService()
+var policyComplianceSrv = compliance.NewPolicyComplianceService()
 
 // SetPolicyComplianceService initializes the policy compliance service instance.
-func SetPolicyComplianceService(srv services.PolicyComplianceService) {
+func SetPolicyComplianceService(srv compliance.PolicyComplianceService) {
 	policyComplianceSrv = srv
 }
 

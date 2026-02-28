@@ -11,7 +11,7 @@ import (
 	"dbfartifactapi/controllers"
 	_ "dbfartifactapi/docs"
 	"dbfartifactapi/pkg/logger"
-	"dbfartifactapi/services"
+	"dbfartifactapi/services/compliance"
 	"dbfartifactapi/services/entity"
 	"dbfartifactapi/services/fileops"
 	"dbfartifactapi/services/group"
@@ -56,7 +56,7 @@ func main() {
 	controllers.SetDBObjectMgtService(entity.NewDBObjectMgtService())
 	controllers.SetDBPolicyService(policy.NewDBPolicyService())
 	controllers.SetSessionService(session.NewSessionService())
-	controllers.SetPolicyComplianceService(services.NewPolicyComplianceService())
+	controllers.SetPolicyComplianceService(compliance.NewPolicyComplianceService())
 	controllers.SetGroupManagementService(group.NewGroupManagementService())
 	controllers.SetBackupService(fileops.NewBackupService())
 	controllers.SetUploadService(fileops.NewUploadService())
